@@ -1,5 +1,5 @@
 export interface HourRecord {
-  _time: string; // ISO string
+  time: string; // ISO string
   tempc?: number;
   tempinc?: number;
   humidity?: number;
@@ -10,16 +10,17 @@ export interface HourRecord {
   rainratemm?: number;
   totalrainmm?: number;
   uv?: number;
+  solarradiation?: number;
 }
 
 export interface TodayData extends HourRecord {
-  minTemp?: number;
-  maxTemp?: number;
-  minTempIn?: number;
-  maxTempIn?: number;
+  mintemp?: number;
+  maxtemp?: number;
+  mintempin?: number;
+  maxtempin?: number;
   sunrise?: string;
   sunset?: string;
-  maxUV?: number;
+  maxuv?: number;
 }
 
 export type LoadingOrValue<T> = {

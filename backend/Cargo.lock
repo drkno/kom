@@ -839,6 +839,7 @@ dependencies = [
  "num-traits",
  "serde",
  "serde_json",
+ "sunrise",
  "thiserror",
  "tokio",
  "tower-http",
@@ -1474,6 +1475,15 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+
+[[package]]
+name = "sunrise"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0733c9f1eaa06ed6d103d88e21f784449d08a6733c2ca2b39381cbcbcfe89272"
+dependencies = [
+ "chrono",
+]
 
 [[package]]
 name = "syn"
