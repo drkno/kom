@@ -1,20 +1,21 @@
 use axum::{
-    Json, Router,
-    extract::{Query, State},
-    http::StatusCode,
+    extract::{Query, State}, http::StatusCode,
     response::IntoResponse,
     routing::get,
+    Json,
+    Router,
 };
-use chrono::{DateTime, FixedOffset, Local, NaiveTime, Utc};
+use chrono::{DateTime, FixedOffset, Local, NaiveTime, TimeDelta};
 use dotenvy::dotenv;
-use influxdb2::{Client, models::Query as InfluxQuery, FromDataPoint};
+use influxdb2::{models::Query as InfluxQuery, Client, FromDataPoint};
 use serde::{Deserialize, Serialize};
 use std::{env, sync::Arc};
-use thiserror::Error;
-use tracing_subscriber::EnvFilter;
-use tower_http::services::ServeDir;
-use tokio::signal;
 use sunrise::{Coordinates, SolarDay, SolarEvent};
+use thiserror::Error;
+use tokio::signal;
+use tower_http::services::ServeDir;
+use tracing_subscriber::EnvFilter;
+use crate::ApiError::Other;
 
 #[derive(Clone)]
 struct ServerState {
@@ -167,9 +168,26 @@ async fn past(
     State(state): State<Arc<ServerState>>,
     Query(params): Query<RangeParams>,
 ) -> Result<Json<Vec<HourRecord>>, ApiError> {
+    let start = DateTime::parse_from_rfc3339(&params.start)
+        .map(|t| t - TimeDelta::hours(1));
+
+    if let Err(parse_error) = start {
+        return Err(Other(parse_error.to_string()));
+    }
+
     let flux = build_range_flux(&state.bucket, &params.start, &params.end);
     let mut data = query_flux(&state, &flux).await?;
     data.sort_by_key(|r| r.time);
+
+    let mut last_total_rain = data.first().unwrap().totalrainmm;
+    for datum in &mut data {
+        let next_total_rain = datum.totalrainmm;
+        let delta = next_total_rain - last_total_rain;
+        last_total_rain = next_total_rain;
+        datum.totalrainmm = delta;
+    }
+    data.remove(0);
+
     Ok(Json(data))
 }
 
@@ -194,7 +212,7 @@ async fn today(State(state): State<Arc<ServerState>>) -> Result<Json<serde_json:
     result.rainratemm = last.rainratemm;
     result.totalrainmm = last.totalrainmm - data.first().unwrap().totalrainmm;
     result.uv = last.uv;
-    let solar_day = SolarDay::new(state.coordinates, Utc::now().date_naive());
+    let solar_day = SolarDay::new(state.coordinates, Local::now().date_naive());
     result.sunrise = solar_day.event_time(SolarEvent::Sunrise).with_timezone(&Local).to_rfc3339();
     result.sunset = solar_day.event_time(SolarEvent::Sunset).with_timezone(&Local).to_rfc3339();
     result.solarradiation = last.solarradiation;
