@@ -59,7 +59,7 @@ const ToolbarMenu: React.FC<{ buttonText: string, children: React.ReactNode }> =
         <>
             <Button
                 aria-haspopup="true"
-                aria-expanded={open ? 'true' : undefined}
+                aria-expanded={open ? 'true' : void(0)}
                 color='inherit'
                 variant="text"
                 disableElevation

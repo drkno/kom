@@ -9,7 +9,7 @@ import {
 import WbTwilightIcon from '@mui/icons-material/WbTwilight';
 import SunnySnowingIcon from '@mui/icons-material/SunnySnowing';
 import Loading from '../common/Loading.tsx';
-import WindDirection from '../common/WindDirection.tsx';
+import { WindDirectionArrow, WindDirectionName } from '../common/WindDirection.tsx';
 import { loadToday } from '../api';
 import { dewPoint } from '../util';
 import UvIndex from '../common/UvIndex.tsx';
@@ -21,6 +21,13 @@ const toTimeString = (value?: string): string => {
         return '--';
     }
     return Temporal.PlainDateTime.from(value).toPlainTime().toString({smallestUnit: 'minute'});
+};
+
+const NumberOrDefault: React.FC<{value?: number, defaultValue: string}> = ({value, defaultValue}) => {
+    if (value === void(0) || value === null) {
+        return (<span>{defaultValue}</span>);
+    }
+    return (<span>{value}</span>);
 };
 
 const TodayCard: React.FC = () => {
@@ -41,18 +48,18 @@ const TodayCard: React.FC = () => {
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
                         <Typography variant="body1">
-                            <b>{todayData.windspeedkph ?? '--'} kph {todayData.winddir ?? ''} <WindDirection direction={todayData.winddir ?? ''} /></b>&nbsp;&nbsp;Wind
+                            <b><NumberOrDefault value={todayData.windspeedkph} defaultValue='--' /> kph <WindDirectionArrow direction={todayData.winddir} /><WindDirectionName direction={todayData.winddir} /></b>&nbsp;&nbsp;Wind
                         </Typography>
                         <Typography variant="body1">
-                            <b>{todayData.totalrainmm ?? '--'} mm</b>&nbsp;&nbsp;Rain since midnight
+                            <b><NumberOrDefault value={todayData.totalrainmm} defaultValue='--' /> mm</b>&nbsp;&nbsp;Rain since midnight
                         </Typography>
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
                         <Typography variant="body1">
-                            <b>{todayData.humidity ?? '--'}%</b>&nbsp;&nbsp;Outdoor Humidity
+                            <b><NumberOrDefault value={todayData.humidity} defaultValue='--' />%</b>&nbsp;&nbsp;Outdoor Humidity
                         </Typography>
                         <Typography variant="body1">
-                            <b>{todayData.humidityin ?? '--'}%</b>&nbsp;&nbsp;Indoor Humidity
+                            <b><NumberOrDefault value={todayData.humidityin} defaultValue='--' />%</b>&nbsp;&nbsp;Indoor Humidity
                         </Typography>
                         <Typography variant="body1">
                             <b>{dewPoint(todayData.tempc, todayData.humidity)}°C</b>&nbsp;&nbsp;Dew Point
@@ -78,7 +85,7 @@ const TodayCard: React.FC = () => {
                             <b>{toTimeString(todayData.sunset)}</b>&nbsp;&nbsp;Sunset
                         </Typography>
                         <Typography variant="body1">
-                            <b><UvIndex uv={todayData.maxuv ?? 0} describe /></b>&nbsp;&nbsp;Max UV Index
+                            <b><UvIndex uv={todayData.maxuv} describe /></b>&nbsp;&nbsp;Max UV Index
                         </Typography>
                     </Grid>
                 </Grid>

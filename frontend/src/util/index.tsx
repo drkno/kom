@@ -1,1 +1,1 @@
-export { feelsLike, dewPoint } from './derive.tsx';
+export { isNight, dewPoint } from './derive.tsx';

@@ -5,11 +5,9 @@ import {
     Grid,
 } from '@mui/material';
 import TemperatureCard from './TemperatureCard';
-import OverviewCard, { type WeatherType } from './OverviewCard';
+import OverviewCard from './OverviewCard';
 import Loading from '../common/Loading.tsx';
-import { feelsLike } from '../util';
 import { loadToday } from '../api';
-import { Temporal } from 'temporal-polyfill';
 
 const CurrentCard: React.FC = () => {
     const loadTodayResult = loadToday();
@@ -18,16 +16,6 @@ const CurrentCard: React.FC = () => {
     }
     const todayData = loadTodayResult.value;
 
-    const hour = Temporal.Now.zonedDateTimeISO().hour;
-    let weatherType: WeatherType = 'Mostly Clear';
-    if (todayData.totalrainmm && todayData.totalrainmm > 0) {
-        weatherType = 'Rain';
-    } else if (hour <= 6 || hour >= 18) {
-        weatherType = 'Clear';
-    } else if (todayData.solarradiation && todayData.solarradiation < 100) {
-        weatherType = 'Overcast';
-    }
-
     return (
         <Card variant="outlined">
             <CardContent>
@@ -35,18 +23,15 @@ const CurrentCard: React.FC = () => {
                     <TemperatureCard
                         title="Outdoor"
                         temp={todayData.tempc}
-                        feels={feelsLike(todayData.tempc, todayData.humidity)}
+                        feels={todayData.feelslike}
                         min={todayData.mintemp}
                         max={todayData.maxtemp}
                     />
-                    <OverviewCard
-                        weatherType={weatherType}
-                        rain={todayData.totalrainmm}
-                    />
+                    <OverviewCard todayData={todayData} />
                     <TemperatureCard
                         title="Indoor"
                         temp={todayData.tempinc}
-                        feels={feelsLike(todayData.tempinc, todayData.humidityin)}
+                        feels={todayData.feelslikein}
                         min={todayData.mintempin}
                         max={todayData.maxtempin}
                         style={{ textAlign: 'right' }}

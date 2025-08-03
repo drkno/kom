@@ -10,7 +10,7 @@ const mockValuesForTesting: TodayData = {
   humidityin: 55,
   windspeedkph: 10,
   windgustkph: 15,
-  winddir: 'N',
+  winddir: 0.0,
   rainratemm: 0,
   totalrainmm: 0,
   uv: 4,
@@ -20,7 +20,9 @@ const mockValuesForTesting: TodayData = {
   maxtempin: 23,
   sunrise: '06:00',
   sunset: '18:00',
-  maxuv: 6
+  maxuv: 6,
+  feelslike: 21,
+  feelslikein: 24
 };
 
 const loadToday = async(): Promise<TodayData> => {

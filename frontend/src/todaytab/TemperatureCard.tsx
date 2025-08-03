@@ -4,7 +4,7 @@ import {
     Typography,
 } from '@mui/material';
 
-const TemperatureCard: React.FC<{ title: string; temp?: number; feels?: string; min?: number; max?: number, style?: CSSProperties }> = ({
+const TemperatureCard: React.FC<{ title: string; temp?: number; feels?: number; min?: number; max?: number, style?: CSSProperties }> = ({
     title,
     temp,
     feels,

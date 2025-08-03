@@ -8,7 +8,7 @@ export const normaliseTodayData = (todayData: TodayData): TodayData => {
         maxtempin: round(1, todayData.maxtempin),
         sunrise: todayData.sunrise,
         sunset: todayData.sunset,
-        maxuv: round(1, todayData.maxuv)
+        maxuv: round(1, todayData.maxuv),
     });
 }
 
@@ -24,12 +24,14 @@ export const normaliseHourRecord = (hourRecord: HourRecord): HourRecord => {
         winddir: hourRecord.winddir,
         rainratemm: round(2, hourRecord.rainratemm),
         totalrainmm: round(2, hourRecord.totalrainmm),
-        uv: round(1, hourRecord.uv)
+        uv: round(1, hourRecord.uv),
+        feelslike: round(1, hourRecord.feelslike),
+        feelslikein: round(1, hourRecord.feelslikein),
     };
 };
 
 const round = (places: number, value?: number) => {
-    if (!value) {
+    if (value === void(0) || value === null) {
         return;
     }
     return +value.toFixed(places);

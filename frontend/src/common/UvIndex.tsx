@@ -2,7 +2,10 @@ import React from 'react';
 import CircleIcon from '@mui/icons-material/Circle';
 import InlineIcon from './InlineIcon';
 
-const UvIndex: React.FC<{ uv: number, describe?: boolean }> = ({ uv, describe }) => {
+const UvIndex: React.FC<{ uv?: number, describe?: boolean }> = ({ uv, describe }) => {
+    if (uv === void(0) || uv === null || isNaN(uv)) {
+        uv = 0;
+    }
     let colour: 'inherit' | 'action' | 'disabled' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'disabled';
     let description = '--';
 

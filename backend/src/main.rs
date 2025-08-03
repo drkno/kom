@@ -1,3 +1,6 @@
+mod flux;
+mod types;
+
 use axum::{
     extract::{Query, State}, http::StatusCode,
     response::IntoResponse,
@@ -5,16 +8,19 @@ use axum::{
     Json,
     Router,
 };
-use chrono::{DateTime, FixedOffset, Local, NaiveTime, TimeDelta};
+use chrono::{DateTime, Local, NaiveTime, TimeDelta};
 use dotenvy::dotenv;
-use influxdb2::{models::Query as InfluxQuery, Client, FromDataPoint};
-use serde::{Deserialize, Serialize};
+use influxdb2::Client;
+use serde::Deserialize;
 use std::{env, sync::Arc};
 use sunrise::{Coordinates, SolarDay, SolarEvent};
 use thiserror::Error;
 use tokio::signal;
 use tower_http::services::ServeDir;
 use tracing_subscriber::EnvFilter;
+
+use crate::flux::{build_range_flux, query_flux};
+use crate::types::{HourRecordFlux, HourRecordWithDerivedTypes, TodayDataFlux, TodayDataWithDerivedTypes};
 use crate::ApiError::Other;
 
 #[derive(Clone)]
@@ -44,117 +50,34 @@ impl IntoResponse for ApiError {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, FromDataPoint)]
-struct HourRecord {
-    time: DateTime<FixedOffset>,
-    tempc: f64,
-    tempinc: f64,
-    humidity: f64,
-    humidityin: f64,
-    windspeedkph: f64,
-    windgustkph: f64,
-    winddir: String,
-    rainratemm: f64,
-    totalrainmm: f64,
-    uv: f64,
-    solarradiation: f64,
-}
+fn feels_like_temperature(tempc: f64, humidity: f64, windspeedkph: f64) -> f64 {
+    let temp_f = (tempc * 9.0 / 5.0) + 32.0;
+    let wind_kph = windspeedkph;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct TodayData {
-    time: DateTime<FixedOffset>,
-    tempc: f64,
-    tempinc: f64,
-    humidity: f64,
-    humidityin: f64,
-    windspeedkph: f64,
-    windgustkph: f64,
-    winddir: String,
-    rainratemm: f64,
-    totalrainmm: f64,
-    uv: f64,
-    mintemp: f64,
-    maxtemp: f64,
-    mintempin: f64,
-    maxtempin: f64,
-    sunrise: String,
-    sunset: String,
-    maxuv: f64,
-    solarradiation: f64,
-}
+    // NOAA Heat Index (°F)
+    let hi_f = -42.379
+        + 2.04901523 * temp_f
+        + 10.14333127 * humidity
+        - 0.22475541 * temp_f * humidity
+        - 0.00683783 * temp_f * temp_f
+        - 0.05481717 * humidity * humidity
+        + 0.00122874 * temp_f * temp_f * humidity
+        + 0.00085282 * temp_f * humidity * humidity
+        - 0.00000199 * temp_f * temp_f * humidity * humidity;
 
-impl Default for HourRecord {
-    fn default() -> Self {
-        Self {
-            time: chrono::prelude::DateTime::from_timestamp(0_i64, 0_u32).unwrap().with_timezone(&FixedOffset::east_opt(0).unwrap()),
-            tempc: 0_f64,
-            tempinc: 0_f64,
-            humidity: 0_f64,
-            humidityin: 0_f64,
-            windspeedkph: 0_f64,
-            windgustkph: 0_f64,
-            winddir: "".to_string(),
-            rainratemm: 0_f64,
-            totalrainmm: 0_f64,
-            uv: 0_f64,
-            solarradiation: f64::MIN,
-        }
-    }
-}
+    // Convert back to °C
+    let hi_c = (hi_f - 32.0) * 5.0 / 9.0;
 
-impl Default for TodayData {
-    fn default() -> Self {
-        Self {
-            time: chrono::prelude::DateTime::from_timestamp(0_i64, 0_u32).unwrap().with_timezone(&FixedOffset::east_opt(0).unwrap()),
-            tempc: 0_f64,
-            tempinc: 0_f64,
-            humidity: 0_f64,
-            humidityin: 0_f64,
-            windspeedkph: 0_f64,
-            windgustkph: 0_f64,
-            winddir: "".to_string(),
-            rainratemm: 0_f64,
-            totalrainmm: 0_f64,
-            uv: 0_f64,
-            mintemp: f64::MAX,
-            maxtemp: f64::MIN,
-            mintempin: f64::MAX,
-            maxtempin: f64::MIN,
-            sunrise: "".to_string(),
-            sunset: "".to_string(),
-            maxuv: f64::MIN,
-            solarradiation: f64::MIN,
-        }
-    }
-}
+    // Wind Chill (Environment Canada)
+    let wind_pow = wind_kph.powf(0.16);
+    let wc_c = 13.12 + 0.6215 * tempc - 11.37 * wind_pow + 0.3965 * tempc * wind_pow;
 
-fn build_range_flux(bucket: &str, start: &str, end: &str) -> String {
-    format!(
-        r#"from(bucket: "{bucket}")
-  |> range(start: time(v: "{start}"), stop: time(v: "{end}"))
-  |> filter(fn: (r) => r._measurement == "weather")
-  |> filter(fn: (r) =>
-    r._field == "tempc" or r._field == "tempinc" or r._field == "humidity" or r._field == "humidityin" or
-    r._field == "windspeedkph" or r._field == "windgustkph" or r._field == "winddir" or r._field == "rainratemm" or
-    r._field == "totalrainmm" or r._field == "uv" or r._field == "solarradiation")
-  |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)
-  |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
-  |> sort(columns:["_time"])
-  |> rename(columns: {{_measurement: "_field", submitted_by: "_value"}})
-"#
-    )
-}
-
-async fn query_flux(state: &Arc<ServerState>, flux: &str) -> Result<Vec<HourRecord>, ApiError> {
-    let query = InfluxQuery::new(flux.to_owned());
-    let result = state
-        .client
-        .query::<HourRecord>(Some(query))
-        .await;
-
-    match result {
-        Ok(value) => Ok(value),
-        Err(err) => Err(ApiError::Influx(err)),
+    if temp_f >= 80.0 && humidity >= 40.0 {
+        hi_c
+    } else if tempc <= 10.0 && wind_kph >= 4.8 {
+        wc_c
+    } else {
+        tempc
     }
 }
 
@@ -167,7 +90,7 @@ struct RangeParams {
 async fn past(
     State(state): State<Arc<ServerState>>,
     Query(params): Query<RangeParams>,
-) -> Result<Json<Vec<HourRecord>>, ApiError> {
+) -> Result<Json<Vec<HourRecordWithDerivedTypes>>, ApiError> {
     let start = DateTime::parse_from_rfc3339(&params.start)
         .map(|t| t - TimeDelta::hours(1));
 
@@ -179,16 +102,22 @@ async fn past(
     let mut data = query_flux(&state, &flux).await?;
     data.sort_by_key(|r| r.time);
 
-    let mut last_total_rain = data.first().unwrap().totalrainmm;
-    for datum in &mut data {
-        let next_total_rain = datum.totalrainmm;
-        let delta = next_total_rain - last_total_rain;
+    let mut last_total_rain = data.first().unwrap().totalrainmm.max(0_f64);
+    let mut result: Vec<HourRecordWithDerivedTypes> = Vec::new();
+    for datum in data {
+        let next_total_rain = datum.totalrainmm.max(0_f64);
+        let delta = (next_total_rain - last_total_rain).max(0_f64);
         last_total_rain = next_total_rain;
-        datum.totalrainmm = delta;
-    }
-    data.remove(0);
 
-    Ok(Json(data))
+        let mut result_datum = HourRecordWithDerivedTypes::from(datum);
+        result_datum.totalrainmm = delta;
+        result_datum.feelslike = feels_like_temperature(result_datum.tempc, result_datum.humidity, result_datum.windspeedkph);
+        result_datum.feelslikein = feels_like_temperature(result_datum.tempinc, result_datum.humidityin, 0_f64);
+        result.push(result_datum);
+    }
+    result.remove(0);
+
+    Ok(Json(result))
 }
 
 async fn today(State(state): State<Arc<ServerState>>) -> Result<Json<serde_json::Value>, ApiError> {
@@ -199,7 +128,7 @@ async fn today(State(state): State<Arc<ServerState>>) -> Result<Json<serde_json:
     data.sort_by_key(|r| r.time);
 
     let last = data.last().unwrap();
-    let mut result = TodayData::default();
+    let mut result = TodayDataWithDerivedTypes::default();
 
     result.time = last.time;
     result.tempc = last.tempc;
@@ -216,6 +145,8 @@ async fn today(State(state): State<Arc<ServerState>>) -> Result<Json<serde_json:
     result.sunrise = solar_day.event_time(SolarEvent::Sunrise).with_timezone(&Local).to_rfc3339();
     result.sunset = solar_day.event_time(SolarEvent::Sunset).with_timezone(&Local).to_rfc3339();
     result.solarradiation = last.solarradiation;
+    result.feelslike = feels_like_temperature(result.tempc, result.humidity, result.windspeedkph);
+    result.feelslikein = feels_like_temperature(result.tempinc, result.humidityin, 0_f64);
     for datum in data {
         result.mintemp = result.mintemp.min(datum.tempc);
         result.maxtemp = result.maxtemp.max(datum.tempc);

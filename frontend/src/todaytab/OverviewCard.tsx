@@ -1,42 +1,27 @@
-import React, { type CSSProperties } from 'react';
+import React from 'react';
 import {
     Grid,
     Typography,
 } from '@mui/material';
-import SunnyIcon from '@mui/icons-material/Sunny';
-import CloudIcon from '@mui/icons-material/Cloud';
-import CloudySnowingIcon from '@mui/icons-material/CloudySnowing';
-import NightlightIcon from '@mui/icons-material/Nightlight';
+import { WeatherIcon, WeatherName } from '../common/WeatherType.tsx';
+import type { TodayData } from '../api/types.tsx';
+import { Temporal } from 'temporal-polyfill';
 
-export type WeatherType = 'Clear' | 'Mostly Clear' | 'Overcast' | 'Rain';
-
-const WeatherIcon: React.FC<{ type: WeatherType }> = ({ type }) => {
-    switch (type) {
-        case 'Clear':
-            return <NightlightIcon fontSize='large' />;
-        case 'Mostly Clear':
-            return <SunnyIcon fontSize='large' />;
-        case 'Overcast':
-            return <CloudIcon fontSize='large' />;
-        case 'Rain':
-            return <CloudySnowingIcon fontSize='large' />;
-        default:
-            return null;
-    }
-}
-
-const TemperatureCard: React.FC<{ weatherType: WeatherType; rain?: number; style?: CSSProperties }> = ({
-    weatherType, rain, style,
-}) => (
-    <Grid size={{ xs: 12, md: 4 }} fontStyle={{textAlign: 'center'}} style={style}>
-        <WeatherIcon type={weatherType} />
-        <Typography variant="h4" gutterBottom>
-            {weatherType}
-        </Typography>
-        <Typography variant="h5" gutterBottom>
-            {rain != null && rain > 0 ? `${rain.toFixed(2)}mm rain` : 'No rain'}
-        </Typography>
-    </Grid>
-);
+const TemperatureCard: React.FC<{ todayData: TodayData }> = ({
+    todayData,
+}) => {
+    const hour = Temporal.Now.instant().toZonedDateTimeISO('Australia/Sydney').hour;
+    return (
+        <Grid size={{ xs: 12, md: 4 }} fontStyle={{textAlign: 'center'}}>
+            <WeatherIcon record={todayData} hour={hour} size='large' />
+            <Typography variant="h4" gutterBottom>
+                <WeatherName record={todayData} hour={hour} />
+            </Typography>
+            <Typography variant="h5" gutterBottom>
+                {todayData.totalrainmm != null && todayData.totalrainmm > 0 ? `${todayData.totalrainmm}mm rain` : 'No rain'}
+            </Typography>
+        </Grid>
+    );
+};
 
 export default TemperatureCard;

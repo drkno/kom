@@ -12,7 +12,7 @@ const mockValuesForTesting: HourRecord[] = [
         humidityin: 84.5,
         windspeedkph: 12.6,
         windgustkph: 13.6,
-        winddir: 'W',
+        winddir: 270.0,
         rainratemm: 2,
         totalrainmm: 2,
         uv: 5
@@ -25,7 +25,7 @@ const mockValuesForTesting: HourRecord[] = [
         humidityin: 85.0,
         windspeedkph: 11.0,
         windgustkph: 12.0,
-        winddir: 'NW',
+        winddir: 315.0,
         rainratemm: 1,
         totalrainmm: 3,
         uv: 4
@@ -38,7 +38,7 @@ const mockValuesForTesting: HourRecord[] = [
         humidityin: 85.0,
         windspeedkph: 11.0,
         windgustkph: 12.0,
-        winddir: 'NW',
+        winddir: 315.0,
         rainratemm: 1,
         totalrainmm: 3,
         uv: 4

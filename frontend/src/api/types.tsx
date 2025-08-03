@@ -6,11 +6,13 @@ export interface HourRecord {
   humidityin?: number;
   windspeedkph?: number;
   windgustkph?: number;
-  winddir?: string;
+  winddir?: number;
   rainratemm?: number;
   totalrainmm?: number;
   uv?: number;
   solarradiation?: number;
+  feelslike?: number;
+  feelslikein?: number;
 }
 
 export interface TodayData extends HourRecord {

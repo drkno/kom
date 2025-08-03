@@ -8,17 +8,19 @@ import {
     TableBody,
     TableContainer,
     TableCell,
-    type TableCellProps
-} from '@mui/material';
+    type TableCellProps} from '@mui/material';
 import { Temporal } from 'temporal-polyfill';
 
-import { feelsLike, dewPoint } from '../util';
+import { dewPoint, isNight } from '../util';
 import type { HourRecord } from '../api';
 
 import { loadPastDataForRange } from '../api';
 import Loading from '../common/Loading';
 import UvIndex from './UvIndex';
-import WindDirection from './WindDirection';
+import { WindDirectionArrow, WindDirectionName } from './WindDirection';
+import { WeatherIcon } from './WeatherType';
+import { AreaPlot, ChartContainer, ChartsTooltip, LinePlot } from '@mui/x-charts';
+
 
 interface DayHourBuckets {
     [day: string]: HourRecord[];
@@ -28,7 +30,7 @@ const toDate = (iso: string) => Temporal.Instant.from(iso).toZonedDateTimeISO(Te
 const toDay = (iso: string): string => toDate(iso).toPlainDate().toString();
 const toHour = (iso: string): number => toDate(iso).hour;
 
-const HourlyTable: React.FC<{ start: Temporal.Instant, end: Temporal.Instant }> = ({ start, end }) => {
+const HourlyTable: React.FC<{ start: Temporal.Instant, end: Temporal.Instant, supportsNow?: boolean }> = ({ start, end, supportsNow = false }) => {
     const [filter, setFilter] = useState('all');
     const hourlyDataResult = loadPastDataForRange(start, end);
     if (hourlyDataResult.loading) {
@@ -53,9 +55,17 @@ const HourlyTable: React.FC<{ start: Temporal.Instant, end: Temporal.Instant }> 
         .sort(Temporal.PlainDate.compare);
 
 
-    const forEachHour = (callback: (hour: HourRecord, dayIndex: number, day: string) => React.ReactNode): React.ReactNode[] =>
-        sortedDays.flatMap((day) =>
-            dayBuckets[day].map((hour, dayIndex) => callback(hour, dayIndex, day)));
+    const forEachDay = (callback: (hours: HourRecord[], day: string) => React.ReactNode): React.ReactNode[] =>
+        sortedDays.flatMap((day) => callback(dayBuckets[day], day));
+
+    const forEachHour = (callback: (hour: HourRecord, dayHour: number, day: string, isLast: boolean) => React.ReactNode): React.ReactNode[] =>
+        sortedDays.flatMap((day, dayIndex) =>
+            dayBuckets[day].map((hour, hourIndex) =>
+                callback(
+                    hour,
+                    toHour(hour.time),
+                    day,
+                    dayIndex === sortedDays.length - 1 && hourIndex === dayBuckets[day].length - 1)));
 
     return (
         <>
@@ -66,36 +76,64 @@ const HourlyTable: React.FC<{ start: Temporal.Instant, end: Temporal.Instant }> 
                 <Table>
                     <TableHead>
                         <TableRow>
-                            {sortedDays.map((day) => (
-                                <DayTableCell key={day} dayIndex={0} colSpan={dayBuckets[day].length}>
-                                    <Typography variant="subtitle1"><b>{day}</b></Typography>
-                                </DayTableCell>
-                            ))}
+                            {
+                                forEachDay((hours, day) => (
+                                    <DayTableCell key={day} dayIndex={0} colSpan={hours.length} header>
+                                        <Typography variant="subtitle1"><b>{day}</b></Typography>
+                                    </DayTableCell>
+                                ))
+                            }
                         </TableRow>
                         <TableRow>
                             {
-                                forEachHour((hour, dayIndex) => (
+                                forEachHour((hour, dayIndex, _unusedDay, isLast) => (
                                     <DayTableCell key={hour.time} dayIndex={dayIndex}>
-                                        <Typography variant="subtitle1">{toHour(hour.time)}:00</Typography>
+                                        <Typography variant="subtitle1"
+                                            noWrap
+                                            component="span"
+                                            sx={{
+                                                fontFamily: 'monospace',
+                                                fontWeight: 900,
+                                                letterSpacing: '.1rem',
+                                            }}>
+
+                                            {isLast && supportsNow ? 'Now' : `${dayIndex}:00`}
+                                        </Typography>
                                     </DayTableCell>
                                 ))}
                         </TableRow>
                     </TableHead>
                     <TableBody>
+                        <ApplyFilter expectedFilter='all' actualFilter={filter}>
+                            <TableRow>
+                                {
+                                    forEachHour((hour, dayIndex) => (
+                                        <DayTableCell key={hour.time} dayIndex={dayIndex} style={{ borderBottom: 'none' }}>
+                                            <WeatherIcon record={hour} hour={dayIndex} size='medium' />
+                                        </DayTableCell>
+                                    ))
+                                }
+                            </TableRow>
+                            <TableRow>
+                                <TableCell colSpan={rows.length} style={{ padding: 0, borderBottom: 'none' }}>
+                                    <DayGraph hours={rows} />
+                                </TableCell>
+                            </TableRow>
+                        </ApplyFilter>
                         <ApplyFilter expectedFilter='outside' actualFilter={filter}>
-                            <OutdoorTemperatureRows rows={rows} forEachHour={forEachHour} />
+                            <OutdoorTemperatureRows rows={rows} forEachDay={forEachDay} forEachHour={forEachHour} filter={filter} />
                         </ApplyFilter>
                         <ApplyFilter expectedFilter='inside' actualFilter={filter}>
-                            <IndoorTemperatureRows rows={rows} forEachHour={forEachHour} />
+                            <IndoorTemperatureRows rows={rows} forEachDay={forEachDay} forEachHour={forEachHour} filter={filter} />
                         </ApplyFilter>
                         <ApplyFilter expectedFilter='rain' actualFilter={filter}>
-                            <RainRows rows={rows} forEachHour={forEachHour} />
+                            <RainRows rows={rows} forEachDay={forEachDay} forEachHour={forEachHour} filter={filter} />
                         </ApplyFilter>
                         <ApplyFilter expectedFilter='wind' actualFilter={filter}>
-                            <WindRows rows={rows} forEachHour={forEachHour} />
+                            <WindRows rows={rows} forEachDay={forEachDay} forEachHour={forEachHour} filter={filter} />
                         </ApplyFilter>
                         <ApplyFilter expectedFilter='other' actualFilter={filter}>
-                            <OtherRows rows={rows} forEachHour={forEachHour} />
+                            <OtherRows rows={rows} forEachDay={forEachDay} forEachHour={forEachHour} filter={filter} />
                         </ApplyFilter>
                     </TableBody>
                 </Table>
@@ -106,15 +144,33 @@ const HourlyTable: React.FC<{ start: Temporal.Instant, end: Temporal.Instant }> 
 
 interface DayTableCellProps extends TableCellProps {
     dayIndex: number;
+    header?: boolean;
 }
 
-const DayTableCell: React.FC<DayTableCellProps> = ({ dayIndex, children, ...props }) => {
-    const styles: CSSProperties = {};
+const DayTableCell: React.FC<DayTableCellProps> = ({ dayIndex, children, header = false, ...props }) => {
+    const styles: CSSProperties = props.style || {};
     if (dayIndex === 0) {
         styles.borderLeft = '1px solid black';
     }
+
+    if (isNight(dayIndex) && !props.colSpan) {
+        styles.backgroundColor = '#a9a9a933';
+    }
+
+    if (header) {
+        styles.backgroundColor = '#1976d20f';
+    }
+    else {
+        styles.textAlign = 'center';
+        styles.justifyContent = 'center';
+    }
+
+    styles.margin = 'auto';
+    styles.whiteSpace = 'nowrap';
+    styles.minWidth = '50px';
+
     return (
-        <TableCell style={styles} {...props}>
+        <TableCell align="center" style={styles} {...props}>
             {children}
         </TableCell>
     );
@@ -139,8 +195,8 @@ const Filter: React.FC<{ filter: string, setFilter: (value: string) => void }> =
     );
 };
 
-const ApplyFilter: React.FC<{ expectedFilter: string, actualFilter: string, children: React.ReactNode }> = ({ expectedFilter, actualFilter, children }) => {
-    if (expectedFilter !== actualFilter && actualFilter !== 'all') {
+const ApplyFilter: React.FC<{ expectedFilter: string, actualFilter: string, children: React.ReactNode, skipAll?: boolean }> = ({ expectedFilter, actualFilter, children, skipAll }) => {
+    if (expectedFilter !== actualFilter && (skipAll || actualFilter !== 'all')) {
         return;
     }
     return children;
@@ -148,14 +204,29 @@ const ApplyFilter: React.FC<{ expectedFilter: string, actualFilter: string, chil
 
 interface TableFragment {
     rows: HourRecord[];
-    forEachHour: (callback: (hour: HourRecord, dayIndex: number, day: string) => React.ReactNode) => React.ReactNode[];
+    forEachHour: (callback: (hour: HourRecord, dayIndex: number, day: string, isLast: boolean) => React.ReactNode) => React.ReactNode[];
+    forEachDay: (callback: (hours: HourRecord[], day: string) => React.ReactNode) => React.ReactNode[];
+    filter: string;
 };
 
-const OutdoorTemperatureRows: React.FC<TableFragment> = ({ rows, forEachHour }) => (
+const OutdoorTemperatureRows: React.FC<TableFragment> = ({ rows, forEachDay, forEachHour, filter }) => (
     <>
-        <TableRow>
-            {/* Icon */}
-        </TableRow>
+        <ApplyFilter expectedFilter='outside' actualFilter={filter} skipAll>
+            <TableRow>
+                {
+                    forEachHour((hour, dayIndex) => (
+                        <DayTableCell key={hour.time} dayIndex={dayIndex} style={{ borderBottom: 'none' }}>
+                            <WeatherIcon record={hour} hour={dayIndex} size='medium' />
+                        </DayTableCell>
+                    ))
+                }
+            </TableRow>
+            <TableRow>
+                <TableCell colSpan={rows.length} style={{ padding: 0, borderBottom: 'none' }}>
+                    <OutsideGraph hours={rows} />
+                </TableCell>
+            </TableRow>
+        </ApplyFilter>
         <TableRow>
             {
                 forEachHour((hour, dayIndex) => (
@@ -164,18 +235,30 @@ const OutdoorTemperatureRows: React.FC<TableFragment> = ({ rows, forEachHour }) 
                     </DayTableCell>
                 ))
             }
-            {/* Graph */}
         </TableRow>
         <TableRow>
-            <DayTableCell dayIndex={0} colSpan={rows.length}>
-                <Typography variant="subtitle2">Feels like</Typography>
-            </DayTableCell>
+            {
+                forEachDay((hours, day) => (
+                    <DayTableCell key={day} dayIndex={0} colSpan={hours.length} style={{ padding: 0 }} header>
+                        <Typography variant="subtitle2"
+                            noWrap
+                            component="span"
+                            sx={{
+                                fontFamily: 'monospace',
+                                fontWeight: 300,
+                                letterSpacing: '.1rem',
+                            }}>
+                            Feels like
+                        </Typography>
+                    </DayTableCell>
+                ))
+            }
         </TableRow>
         <TableRow>
             {
                 forEachHour((hour, dayIndex) => (
                     <DayTableCell key={hour.time} dayIndex={dayIndex}>
-                        <Typography variant="body2">{feelsLike(hour.tempc, hour.humidity)} °C</Typography>
+                        <Typography variant="body2">{hour.feelslike} °C</Typography>
                     </DayTableCell>
                 ))
             }
@@ -183,13 +266,35 @@ const OutdoorTemperatureRows: React.FC<TableFragment> = ({ rows, forEachHour }) 
     </>
 );
 
-const IndoorTemperatureRows: React.FC<TableFragment> = ({ rows, forEachHour }) => (
+const IndoorTemperatureRows: React.FC<TableFragment> = ({ rows, forEachDay, forEachHour, filter }) => (
     <>
-        <TableRow>
-            <DayTableCell dayIndex={0} colSpan={rows.length}>
-                <Typography variant="subtitle2">Inside</Typography>
-            </DayTableCell>
-        </TableRow>
+        <ApplyFilter expectedFilter='all' actualFilter={filter}>
+            <TableRow>
+                {
+                    forEachDay((hours, day) => (
+                        <DayTableCell key={day} dayIndex={0} colSpan={hours.length} header>
+                            <Typography variant="subtitle2"
+                                noWrap
+                                component="span"
+                                sx={{
+                                    fontFamily: 'monospace',
+                                    fontWeight: 900,
+                                    letterSpacing: '.1rem',
+                                }}>
+                                — INSIDE —
+                            </Typography>
+                        </DayTableCell>
+                    ))
+                }
+            </TableRow>
+        </ApplyFilter>
+        <ApplyFilter expectedFilter='inside' actualFilter={filter} skipAll>
+            <TableRow>
+                <TableCell colSpan={rows.length} style={{ padding: 0, borderBottom: 'none' }}>
+                    <InsideGraph hours={rows} />
+                </TableCell>
+            </TableRow>
+        </ApplyFilter>
         <TableRow>
             {
                 forEachHour((hour, dayIndex) => (
@@ -198,18 +303,30 @@ const IndoorTemperatureRows: React.FC<TableFragment> = ({ rows, forEachHour }) =
                     </DayTableCell>
                 ))
             }
-            {/* Graph */}
         </TableRow>
         <TableRow>
-            <DayTableCell dayIndex={0} colSpan={rows.length}>
-                <Typography variant="subtitle2">Feels like</Typography>
-            </DayTableCell>
+            {
+                forEachDay((hours, day) => (
+                    <DayTableCell key={day} dayIndex={0} colSpan={hours.length} style={{ padding: 0 }} header>
+                        <Typography variant="subtitle2"
+                            noWrap
+                            component="span"
+                            sx={{
+                                fontFamily: 'monospace',
+                                fontWeight: 300,
+                                letterSpacing: '.1rem',
+                            }}>
+                            Feels like
+                        </Typography>
+                    </DayTableCell>
+                ))
+            }
         </TableRow>
         <TableRow>
             {
                 forEachHour((hour, dayIndex) => (
                     <DayTableCell key={hour.time} dayIndex={dayIndex}>
-                        {feelsLike(hour.tempinc, hour.humidityin)} °C
+                        {hour.feelslikein} °C
                     </DayTableCell>
                 ))
             }
@@ -217,13 +334,35 @@ const IndoorTemperatureRows: React.FC<TableFragment> = ({ rows, forEachHour }) =
     </>
 );
 
-const RainRows: React.FC<TableFragment> = ({ rows, forEachHour }) => (
+const RainRows: React.FC<TableFragment> = ({ rows, forEachDay, forEachHour, filter }) => (
     <>
-        <TableRow>
-            <DayTableCell dayIndex={0} colSpan={rows.length}>
-                <Typography variant="subtitle2">Rain</Typography>
-            </DayTableCell>
-        </TableRow>
+        <ApplyFilter expectedFilter='all' actualFilter={filter}>
+            <TableRow>
+                {
+                    forEachDay((hours, day) => (
+                        <DayTableCell key={day} dayIndex={0} colSpan={hours.length} header>
+                            <Typography variant="subtitle2"
+                                noWrap
+                                component="span"
+                                sx={{
+                                    fontFamily: 'monospace',
+                                    fontWeight: 900,
+                                    letterSpacing: '.1rem',
+                                }}>
+                                — RAIN —
+                            </Typography>
+                        </DayTableCell>
+                    ))
+                }
+            </TableRow>
+        </ApplyFilter>
+        <ApplyFilter expectedFilter='rain' actualFilter={filter} skipAll>
+            <TableRow>
+                <TableCell colSpan={rows.length} style={{ padding: 0, borderBottom: 'none' }}>
+                    <RainGraph hours={rows} />
+                </TableCell>
+            </TableRow>
+        </ApplyFilter>
         <TableRow>
             {
                 forEachHour((hour, dayIndex) => (
@@ -236,20 +375,34 @@ const RainRows: React.FC<TableFragment> = ({ rows, forEachHour }) => (
     </>
 );
 
-const WindRows: React.FC<TableFragment> = ({ rows, forEachHour }) => (
+const WindRows: React.FC<TableFragment> = ({ forEachDay, forEachHour }) => (
     <>
         <TableRow>
-            <DayTableCell dayIndex={0} colSpan={rows.length}>
-                <Typography variant="subtitle2">Wind</Typography>
-            </DayTableCell>
+            {
+                forEachDay((hours, day) => (
+                    <DayTableCell key={day} dayIndex={0} colSpan={hours.length} header>
+                        <Typography variant="subtitle2"
+                            noWrap
+                            component="span"
+                            sx={{
+                                fontFamily: 'monospace',
+                                fontWeight: 900,
+                                letterSpacing: '.1rem',
+                            }}>
+                            — WIND —
+                        </Typography>
+                    </DayTableCell>
+                ))
+            }
         </TableRow>
         <TableRow>
             {
                 forEachHour((hour, dayIndex) => (
                     <DayTableCell key={hour.time} dayIndex={dayIndex}>
-                        <WindDirection direction={hour.winddir || ''} />
-                        {hour.winddir}
+                        <WindDirectionArrow direction={hour.winddir} />&nbsp;<WindDirectionName direction={hour.winddir} />
+                        <br />
                         {hour.windspeedkph} kph
+                        <br />
                         {hour.windgustkph} kph Gusts
                     </DayTableCell>
                 ))
@@ -258,12 +411,25 @@ const WindRows: React.FC<TableFragment> = ({ rows, forEachHour }) => (
     </>
 );
 
-const OtherRows: React.FC<TableFragment> = ({ rows, forEachHour }) => (
+const OtherRows: React.FC<TableFragment> = ({ forEachDay, forEachHour }) => (
     <>
         <TableRow>
-            <DayTableCell dayIndex={0} colSpan={rows.length}>
-                <Typography variant="subtitle2">Humidity Outside</Typography>
-            </DayTableCell>
+            {
+                forEachDay((hours, day) => (
+                    <DayTableCell key={day} dayIndex={0} colSpan={hours.length} header>
+                        <Typography variant="subtitle2"
+                            noWrap
+                            component="span"
+                            sx={{
+                                fontFamily: 'monospace',
+                                fontWeight: 900,
+                                letterSpacing: '.1rem',
+                            }}>
+                            — HUMIDITY OUTSIDE —
+                        </Typography>
+                    </DayTableCell>
+                ))
+            }
         </TableRow>
         <TableRow>
             {
@@ -275,9 +441,22 @@ const OtherRows: React.FC<TableFragment> = ({ rows, forEachHour }) => (
             }
         </TableRow>
         <TableRow>
-            <DayTableCell dayIndex={0} colSpan={rows.length}>
-                <Typography variant="subtitle2">Humidity Inside</Typography>
-            </DayTableCell>
+            {
+                forEachDay((hours, day) => (
+                    <DayTableCell key={day} dayIndex={0} colSpan={hours.length} header>
+                        <Typography variant="subtitle2"
+                            noWrap
+                            component="span"
+                            sx={{
+                                fontFamily: 'monospace',
+                                fontWeight: 900,
+                                letterSpacing: '.1rem',
+                            }}>
+                            — HUMIDITY INSIDE —
+                        </Typography>
+                    </DayTableCell>
+                ))
+            }
         </TableRow>
         <TableRow>
             {
@@ -289,9 +468,22 @@ const OtherRows: React.FC<TableFragment> = ({ rows, forEachHour }) => (
             }
         </TableRow>
         <TableRow>
-            <DayTableCell dayIndex={0} colSpan={rows.length}>
-                <Typography variant="subtitle2">Dew point</Typography>
-            </DayTableCell>
+            {
+                forEachDay((hours, day) => (
+                    <DayTableCell key={day} dayIndex={0} colSpan={hours.length} header>
+                        <Typography variant="subtitle2"
+                            noWrap
+                            component="span"
+                            sx={{
+                                fontFamily: 'monospace',
+                                fontWeight: 900,
+                                letterSpacing: '.1rem',
+                            }}>
+                            — DEW POINT —
+                        </Typography>
+                    </DayTableCell>
+                ))
+            }
         </TableRow>
         <TableRow>
             {
@@ -303,20 +495,276 @@ const OtherRows: React.FC<TableFragment> = ({ rows, forEachHour }) => (
             }
         </TableRow>
         <TableRow>
-            <DayTableCell dayIndex={0} colSpan={rows.length}>
-                <Typography variant="subtitle2">UV Index</Typography>
-            </DayTableCell>
+            {
+                forEachDay((hours, day) => (
+                    <DayTableCell key={day} dayIndex={0} colSpan={hours.length} header>
+                        <Typography variant="subtitle2"
+                            noWrap
+                            component="span"
+                            sx={{
+                                fontFamily: 'monospace',
+                                fontWeight: 900,
+                                letterSpacing: '.1rem',
+                            }}>
+                            — UV INDEX —
+                        </Typography>
+                    </DayTableCell>
+                ))
+            }
         </TableRow>
         <TableRow>
             {
                 forEachHour((hour, dayIndex) => (
                     <DayTableCell key={hour.time} dayIndex={dayIndex}>
-                        <UvIndex uv={hour.uv || -1} />
+                        <UvIndex uv={hour.uv} />
                     </DayTableCell>
                 ))
             }
         </TableRow>
     </>
 );
+
+const DayGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
+    const rainData = hours.map(hour => hour.totalrainmm || 0);
+    const tempData = hours.map(hour => hour.tempc || 0);
+    const labels = hours.map(hour => hour.time);
+    return (
+        <div style={{ width: '100%', height: 100, display: 'inline-block', paddingLeft: 40, paddingRight: 50 }}>
+            <ChartContainer
+                margin={{
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                }}
+                series={[
+                    {
+                        data: rainData,
+                        type: 'line',
+                        area: true,
+                        stack: 'rain',
+                        yAxisId: 'rain',
+                        color: '#1976d2',
+                        label: 'Rain (mm)',
+                    },
+                    {
+                        data: tempData,
+                        type: 'line',
+                        area: false,
+                        stack: 'temperature',
+                        yAxisId: 'temp',
+                        color: '#ed6c02',
+                        label: 'Temperature (°C)',
+                        showMark: true,
+                        shape: 'triangle',
+                    }
+                ]}
+                xAxis={[
+                    {
+                        scaleType: 'point',
+                        data: labels,
+                        position: 'none',
+                    }
+                ]}
+                yAxis={[
+                    {
+                        id: 'rain',
+                        position: 'none',
+                        min: 0,
+                    },
+                    {
+                        id: 'temp',
+                        position: 'none',
+                        min: Math.min(...tempData),
+                    },
+                ]}>
+                <AreaPlot />
+                <LinePlot />
+                <ChartsTooltip />
+            </ChartContainer>
+        </div>
+    );
+};
+
+const OutsideGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
+    const tempData = hours.map(hour => hour.tempc || 0);
+    const tempFeelsLikeData = hours.map(hour => hour.feelslike || 0);
+    const labels = hours.map(hour => hour.time);
+    return (
+        <div style={{ width: '100%', height: 100, display: 'inline-block', paddingLeft: 40, paddingRight: 50 }}>
+            <ChartContainer
+                margin={{
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                }}
+                series={[
+                    {
+                        data: tempData,
+                        type: 'line',
+                        area: false,
+                        stack: 'temperature',
+                        yAxisId: 'temp',
+                        color: '#ed6c02',
+                        label: 'Temperature (°C)',
+                        showMark: true,
+                        shape: 'triangle',
+                    },
+                    {
+                        data: tempFeelsLikeData,
+                        type: 'line',
+                        area: false,
+                        stack: 'feelslike',
+                        yAxisId: 'temp',
+                        color: '#ff0000',
+                        label: 'Feels Like (°C)',
+                        showMark: true,
+                        shape: 'triangle',
+                    }
+                ]}
+                xAxis={[
+                    {
+                        scaleType: 'point',
+                        data: labels,
+                        position: 'none',
+                    }
+                ]}
+                yAxis={[
+                    {
+                        id: 'temp',
+                        position: 'none',
+                        min: Math.min(...tempData, ...tempFeelsLikeData),
+                    },
+                ]}>
+                <LinePlot />
+                <LinePlot />
+                <ChartsTooltip />
+            </ChartContainer>
+        </div>
+    );
+};
+
+const InsideGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
+    const tempData = hours.map(hour => hour.tempinc || 0);
+    const tempFeelsLikeData = hours.map(hour => hour.feelslikein || 0);
+    const labels = hours.map(hour => hour.time);
+    return (
+        <div style={{ width: '100%', height: 100, display: 'inline-block', paddingLeft: 40, paddingRight: 50 }}>
+            <ChartContainer
+                margin={{
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                }}
+                series={[
+                    {
+                        data: tempData,
+                        type: 'line',
+                        area: false,
+                        stack: 'temperature',
+                        yAxisId: 'temp',
+                        color: '#ed6c02',
+                        label: 'Temperature (°C)',
+                        showMark: true,
+                        shape: 'triangle',
+                    },
+                    {
+                        data: tempFeelsLikeData,
+                        type: 'line',
+                        area: false,
+                        stack: 'feelslike',
+                        yAxisId: 'temp',
+                        color: '#ff0000',
+                        label: 'Feels Like (°C)',
+                        showMark: true,
+                        shape: 'triangle',
+                    }
+                ]}
+                xAxis={[
+                    {
+                        scaleType: 'point',
+                        data: labels,
+                        position: 'none',
+                    }
+                ]}
+                yAxis={[
+                    {
+                        id: 'temp',
+                        position: 'none',
+                        min: Math.min(...tempData, ...tempFeelsLikeData),
+                    },
+                ]}>
+                <LinePlot />
+                <LinePlot />
+                <ChartsTooltip />
+            </ChartContainer>
+        </div>
+    );
+};
+
+
+const RainGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
+    const rainData = hours.map(hour => hour.totalrainmm || 0);
+    const rainRateData = hours.map(hour => hour.rainratemm || 0);
+    const labels = hours.map(hour => hour.time);
+    return (
+        <div style={{ width: '100%', height: 100, display: 'inline-block', paddingLeft: 40, paddingRight: 50 }}>
+            <ChartContainer
+                margin={{
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                }}
+                series={[
+                    {
+                        data: rainData,
+                        type: 'line',
+                        area: true,
+                        stack: 'raintotal',
+                        yAxisId: 'raintotal',
+                        color: '#1976d2',
+                        label: 'Rain (mm)',
+                    },
+                    {
+                        data: rainRateData,
+                        type: 'line',
+                        area: false,
+                        stack: 'rainrate',
+                        yAxisId: 'rainrate',
+                        color: '#ed6c02',
+                        label: 'Rain rate (mm/hr)',
+                        showMark: true,
+                        shape: 'triangle',
+                    }
+                ]}
+                xAxis={[
+                    {
+                        scaleType: 'point',
+                        data: labels,
+                        position: 'none',
+                    }
+                ]}
+                yAxis={[
+                    {
+                        id: 'raintotal',
+                        position: 'none',
+                        min: 0,
+                    },
+                    {
+                        id: 'rainrate',
+                        position: 'none',
+                        min: Math.min(...rainRateData),
+                    },
+                ]}>
+                <AreaPlot />
+                <LinePlot />
+                <ChartsTooltip />
+            </ChartContainer>
+        </div>
+    );
+};
 
 export default HourlyTable;

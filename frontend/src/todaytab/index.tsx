@@ -23,7 +23,7 @@ const TodayTab: React.FC = () => {
                     <Typography variant="h6" gutterBottom>
                         Last 12 Hours
                     </Typography>
-                    <HourlyTable start={startTime} end={endTime} />
+                    <HourlyTable start={startTime} end={endTime} supportsNow />
                 </CardContent>
             </Card>
         </Box>
