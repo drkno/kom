@@ -12,8 +12,14 @@ import TodayTab from './todaytab';
 import PastTab from './pasttab';
 
 const BoxContainer: React.FC<React.PropsWithChildren> = ({ children }) => (
-    <Container maxWidth="xl">
-        <Box sx={{ fontFamily: 'Roboto, sans-serif', p: 2, mx: 'auto' }}>
+    <Container maxWidth="xl" disableGutters>
+        <Box sx={{
+            fontFamily: 'Roboto, sans-serif', p: {
+                xs: 0,
+                md: 2
+            },
+            mx: 'auto'
+        }}>
             {children}
         </Box>
     </Container>
@@ -29,10 +35,18 @@ const TabTag: React.FC<{ tab: number }> = ({ tab }) => {
 
 const ContentSection: React.FC = () => {
     const [tab, setTab] = useState(0);
+    const location = 'Crows Nest';
     return (
         <BoxContainer>
-            <Typography variant='h3' gutterBottom>
-                Sydney - Crows Nest
+            <Typography variant='h3' gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
+                {location}
+            </Typography>
+            <Typography variant='h2' gutterBottom sx={{
+                display: { xs: 'block', md: 'none' },
+                textAlign: 'center',
+                paddingTop: 2
+            }}>
+                {location}
             </Typography>
 
             <Tabs value={tab} onChange={(_, v) => setTab(v)} indicatorColor="primary" textColor="inherit" sx={{ borderBottom: 1, borderColor: 'divider' }}>

@@ -46,7 +46,8 @@ const TodayCard: React.FC = () => {
                             Current Weather
                         </Typography>
                     </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
+                    <Grid size={{ xs: 12, md: 4 }}
+                        sx={{ textAlign: { xs: 'left', md: 'center' } }}>
                         <Typography variant="body1">
                             <b><NumberOrDefault value={todayData.windspeedkph} defaultValue='--' /> kph <WindDirectionArrow direction={todayData.winddir} /><WindDirectionName direction={todayData.winddir} /></b>&nbsp;&nbsp;Wind
                         </Typography>
@@ -54,7 +55,8 @@ const TodayCard: React.FC = () => {
                             <b><NumberOrDefault value={todayData.totalrainmm} defaultValue='--' /> mm</b>&nbsp;&nbsp;Rain since midnight
                         </Typography>
                     </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
+                    <Grid size={{ xs: 12, md: 4 }}
+                        sx={{ textAlign: { xs: 'left', md: 'right' } }}>
                         <Typography variant="body1">
                             <b><NumberOrDefault value={todayData.humidity} defaultValue='--' />%</b>&nbsp;&nbsp;Outdoor Humidity
                         </Typography>
@@ -75,7 +77,7 @@ const TodayCard: React.FC = () => {
                             Sun & UV
                         </Typography>
                     </Grid>
-                    <Grid size={{ xs: 12, md: 8 }}>
+                    <Grid size={{ xs: 12, md: 4 }} sx={{ textAlign: { xs: 'left', md: 'center' } }}>
                         <Typography variant="body1">
                             <InlineIcon><WbTwilightIcon /></InlineIcon>&nbsp;
                             <b>{toTimeString(todayData.sunrise)}</b>&nbsp;&nbsp;Sunrise
