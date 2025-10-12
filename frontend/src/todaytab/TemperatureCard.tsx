@@ -1,18 +1,19 @@
-import React, { type CSSProperties } from 'react';
+import React from 'react';
 import {
     Grid,
     Typography,
+    type SxProps,
 } from '@mui/material';
 
-const TemperatureCard: React.FC<{ title: string; temp?: number; feels?: number; min?: number; max?: number, style?: CSSProperties }> = ({
+const TemperatureCard: React.FC<{ title: string; temp?: number; feels?: number; min?: number; max?: number, sx?: SxProps }> = ({
     title,
     temp,
     feels,
     min,
     max,
-    style,
+    sx,
 }) => (
-    <Grid size={{ xs: 12, md: 4 }} style={style}>
+    <Grid size={{ xs: 12, md: 4 }} sx={sx}>
         <Typography variant="subtitle2" gutterBottom>
             {title}
         </Typography>

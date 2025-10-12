@@ -26,6 +26,7 @@ const CurrentCard: React.FC = () => {
                         feels={todayData.feelslike}
                         min={todayData.mintemp}
                         max={todayData.maxtemp}
+                        sx={{ textAlign: { xs: 'center', md: 'left' } }}
                     />
                     <OverviewCard todayData={todayData} />
                     <TemperatureCard
@@ -34,7 +35,7 @@ const CurrentCard: React.FC = () => {
                         feels={todayData.feelslikein}
                         min={todayData.mintempin}
                         max={todayData.maxtempin}
-                        style={{ textAlign: 'right' }}
+                        sx={{ textAlign: { xs: 'center', md: 'right' } }}
                     />
                 </Grid>
             </CardContent>
