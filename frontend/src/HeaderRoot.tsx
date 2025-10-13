@@ -81,7 +81,7 @@ const ToolbarMenu: React.FC<{ buttonTextXs: string, buttonTextMd: string, childr
                 disableElevation
                 onClick={handleClick}
                 endIcon={<KeyboardArrowDownIcon />}
-                sx={{ display: { xs: 'inline-block', md: 'none' } }}>
+                sx={{ display: { xs: 'inline-flex', md: 'none' } }}>
                 {buttonTextXs}
             </Button>
             <Button
@@ -92,7 +92,7 @@ const ToolbarMenu: React.FC<{ buttonTextXs: string, buttonTextMd: string, childr
                 disableElevation
                 onClick={handleClick}
                 endIcon={<KeyboardArrowDownIcon />}
-                sx={{ display: { xs: 'none', md: 'inline-block' } }}>
+                sx={{ display: { xs: 'none', md: 'inline-flex' } }}>
                 {buttonTextMd}
             </Button>
             <Menu

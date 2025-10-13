@@ -8,8 +8,10 @@ import {
 } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SunnyIcon from '@mui/icons-material/Sunny';
+import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import TodayTab from './todaytab';
 import PastTab from './pasttab';
+import StatsTab from './statstab';
 
 const BoxContainer: React.FC<React.PropsWithChildren> = ({ children }) => (
     <Container maxWidth="xl" disableGutters>
@@ -29,6 +31,7 @@ const TabTag: React.FC<{ tab: number }> = ({ tab }) => {
     switch (tab) {
         case 0: return <TodayTab />;
         case 1: return <PastTab />;
+        case 2: return <StatsTab />;
         default: return null;
     }
 };
@@ -52,6 +55,7 @@ const ContentSection: React.FC = () => {
             <Tabs value={tab} onChange={(_, v) => setTab(v)} indicatorColor="primary" textColor="inherit" sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tab label="Today" icon={<SunnyIcon />} iconPosition="start" />
                 <Tab label="Past" icon={<AccessTimeIcon />} iconPosition="start" />
+                <Tab label="Stats" icon={<QueryStatsIcon />} iconPosition="start" />
             </Tabs>
 
             <TabTag tab={tab} />

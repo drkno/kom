@@ -571,11 +571,13 @@ const DayGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                         id: 'rain',
                         position: 'none',
                         min: 0,
+                        max: Math.max(...rainData),
                     },
                     {
                         id: 'temp',
                         position: 'none',
                         min: Math.min(...tempData),
+                        max: Math.max(...tempData),
                     },
                 ]}>
                 <AreaPlot />

@@ -31,7 +31,7 @@ const PastTab: React.FC = () => {
             <Card variant="outlined">
                 <CardContent>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid size={6}>
+                        <Grid size={6} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
                             <TextField
                                 type="datetime-local"
                                 label="Start"

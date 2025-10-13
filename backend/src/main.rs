@@ -8,7 +8,7 @@ use axum::{
     Json,
     Router,
 };
-use chrono::{DateTime, Local, NaiveTime, TimeDelta};
+use chrono::{DateTime, Local, NaiveTime};
 use dotenvy::dotenv;
 use influxdb2::Client;
 use serde::Deserialize;
@@ -19,8 +19,8 @@ use tokio::signal;
 use tower_http::services::ServeDir;
 use tracing_subscriber::EnvFilter;
 
-use crate::flux::{build_range_flux, query_flux};
-use crate::types::{HourRecordFlux, HourRecordWithDerivedTypes, TodayDataFlux, TodayDataWithDerivedTypes};
+use crate::flux::{build_monthly_flux, build_range_flux, query_flux, query_flux_month_records};
+use crate::types::{HourRecordWithDerivedTypes, TodayDataWithDerivedTypes};
 use crate::ApiError::Other;
 
 #[derive(Clone)]
@@ -87,15 +87,31 @@ struct RangeParams {
     end: String,
 }
 
+fn validate_range_params(params: &RangeParams) -> bool {
+    let start = DateTime::parse_from_rfc3339(&params.start);
+
+    if let Err(_parse_error) = start {
+        return false;
+    }
+
+    let end = DateTime::parse_from_rfc3339(&params.end);
+    if let Err(_parse_error) = end {
+        return false;
+    }
+
+    if end.unwrap().lt(&start.unwrap()) {
+        return false;
+    }
+
+    true
+}
+
 async fn past(
     State(state): State<Arc<ServerState>>,
     Query(params): Query<RangeParams>,
 ) -> Result<Json<Vec<HourRecordWithDerivedTypes>>, ApiError> {
-    let start = DateTime::parse_from_rfc3339(&params.start)
-        .map(|t| t - TimeDelta::hours(1));
-
-    if let Err(parse_error) = start {
-        return Err(Other(parse_error.to_string()));
+    if !validate_range_params(&params) {
+        return Err(Other("Invalid range".to_string()));
     }
 
     let flux = build_range_flux(&state.bucket, &params.start, &params.end);
@@ -158,6 +174,18 @@ async fn today(State(state): State<Arc<ServerState>>) -> Result<Json<serde_json:
     Ok(Json(serde_json::to_value(result).unwrap()))
 }
 
+async fn monthly(State(state): State<Arc<ServerState>>, Query(params): Query<RangeParams>) -> Result<Json<serde_json::Value>, ApiError> {
+    if !validate_range_params(&params) {
+        return Err(Other("Invalid range".to_string()));
+    }
+
+    let flux = build_monthly_flux(&state.bucket, &params.start, &params.end);
+    let mut data = query_flux_month_records(&state, &flux).await?;
+    data.sort_by_key(|r| r.time);
+
+    Ok(Json(serde_json::to_value(data).unwrap()))
+}
+
 async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c()
@@ -212,6 +240,7 @@ async fn main() {
     let router = Router::new()
         .route("/api/past", get(past))
         .route("/api/today", get(today))
+        .route("/api/monthly", get(monthly))
         .fallback_service(static_files)
         .with_state(state);
     let listener = tokio::net::TcpListener::bind(binding_address).await.unwrap();
