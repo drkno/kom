@@ -180,7 +180,7 @@ const ColourTableCell: React.FC<{ type: 'temp' | 'uv' | 'rain' | 'green' | 'humi
     }
 
     return (
-        <TableCell style={{ backgroundColor: colours!.background, color: colours!.textColour }}>
+        <TableCell style={{ backgroundColor: colours!.background, color: colours!.textColour, textAlign: 'center' }}>
             {children.toFixed(decimalPlaces)} {unit}
         </TableCell>
     );

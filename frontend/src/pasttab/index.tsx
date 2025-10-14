@@ -10,8 +10,13 @@ import {
 import { Temporal } from 'temporal-polyfill'
 import HourlyTable from '../common/HourlyTable.tsx';
 
-const toInstant = (value: string): Temporal.Instant =>
-    Temporal.PlainDateTime.from(value).toZonedDateTime(Temporal.Now.timeZoneId()).toInstant();
+const toInstant = (oldValue: Temporal.Instant, value: string): Temporal.Instant => {
+    try {
+        return Temporal.PlainDateTime.from(value).toZonedDateTime(Temporal.Now.timeZoneId()).toInstant();
+    } catch(e) {
+        return oldValue;
+    }
+};
 
 const toFormatString = (instant: Temporal.Instant): string => {
     const {
@@ -37,7 +42,7 @@ const PastTab: React.FC = () => {
                                 label="Start"
                                 size="small"
                                 value={toFormatString(range.start)}
-                                onChange={(e) => setRange((r) => ({ ...r, start: toInstant(e.target.value) }))}
+                                onChange={(e) => setRange((r) => ({ ...r, start: toInstant(r.start, e.target.value) }))}
                             />
                         </Grid>
                         <Grid size={6}>
@@ -46,7 +51,7 @@ const PastTab: React.FC = () => {
                                 label="End"
                                 size="small"
                                 value={toFormatString(range.end)}
-                                onChange={(e) => setRange((r) => ({ ...r, end: toInstant(e.target.value) }))}
+                                onChange={(e) => setRange((r) => ({ ...r, end: toInstant(r.end, e.target.value) }))}
                             />
                         </Grid>
                     </Grid>

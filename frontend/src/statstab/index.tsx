@@ -137,12 +137,12 @@ const YearlyStatsTable: React.FC<{ year: number, data: MonthRecord[] }> = ({ yea
                                 <TableCell>Month</TableCell>
                                 {
                                     data.map(month => (
-                                        <TableCell key={month.time}>
+                                        <TableCell key={month.time} style={{ textAlign: 'center' }}>
                                             <MonthName month={month.time} />
                                         </TableCell>
                                     ))
                                 }
-                                <TableCell>Year</TableCell>
+                                <TableCell>Whole Year</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -329,13 +329,13 @@ const MonthName: React.FC<{ month: string }> = ({ month }) => {
     switch (Temporal.PlainDateTime.from(month.substr(0, month.length - 1)).month) {
         case 1: return <span>Jan</span>;
         case 2: return <span>Feb</span>;
-        case 3: return <span>Mar</span>;
-        case 4: return <span>Apr</span>;
+        case 3: return <span>March</span>;
+        case 4: return <span>April</span>;
         case 5: return <span>May</span>;
-        case 6: return <span>Jun</span>;
-        case 7: return <span>Jul</span>;
+        case 6: return <span>June</span>;
+        case 7: return <span>July</span>;
         case 8: return <span>Aug</span>;
-        case 9: return <span>Sep</span>;
+        case 9: return <span>Sept</span>;
         case 10: return <span>Oct</span>;
         case 11: return <span>Nov</span>;
         case 12: return <span>Dec</span>;

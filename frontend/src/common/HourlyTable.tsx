@@ -637,6 +637,7 @@ const OutsideGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                         id: 'temp',
                         position: 'none',
                         min: Math.min(...tempData, ...tempFeelsLikeData),
+                        max: Math.max(...tempData, ...tempFeelsLikeData),
                     },
                 ]}>
                 <LinePlot />
@@ -696,6 +697,7 @@ const InsideGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                         id: 'temp',
                         position: 'none',
                         min: Math.min(...tempData, ...tempFeelsLikeData),
+                        max: Math.max(...tempData, ...tempFeelsLikeData),
                     },
                 ]}>
                 <LinePlot />
@@ -754,11 +756,13 @@ const RainGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                         id: 'raintotal',
                         position: 'none',
                         min: 0,
+                        max: Math.max(...rainData),
                     },
                     {
                         id: 'rainrate',
                         position: 'none',
                         min: Math.min(...rainRateData),
+                        max: Math.max(...rainRateData),
                     },
                 ]}>
                 <AreaPlot />
