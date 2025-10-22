@@ -16,7 +16,7 @@ use std::{env, sync::Arc};
 use sunrise::{Coordinates, SolarDay, SolarEvent};
 use thiserror::Error;
 use tokio::signal;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tracing_subscriber::EnvFilter;
 
 use crate::flux::{build_monthly_flux, build_range_flux, query_flux, query_flux_month_records};
@@ -236,7 +236,8 @@ async fn main() {
     });
 
     println!("Starting server on {}", binding_address);
-    let static_files = ServeDir::new("frontend");
+    let static_files = ServeDir::new("frontend")
+        .fallback(ServeFile::new("index.html"));
     let router = Router::new()
         .route("/api/past", get(past))
         .route("/api/today", get(today))

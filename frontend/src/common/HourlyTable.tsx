@@ -571,13 +571,13 @@ const DayGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                         id: 'rain',
                         position: 'none',
                         min: 0,
-                        max: Math.max(...rainData),
+                        max: rainData.length === 0 ? 50 : Math.max(1, ...rainData),
                     },
                     {
                         id: 'temp',
                         position: 'none',
-                        min: Math.min(...tempData),
-                        max: Math.max(...tempData),
+                        min: tempData.length === 0 ? 0 : Math.min(...tempData),
+                        max: tempData.length === 0 ? 30 : Math.max(1, ...tempData),
                     },
                 ]}>
                 <AreaPlot />
@@ -636,8 +636,8 @@ const OutsideGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                     {
                         id: 'temp',
                         position: 'none',
-                        min: Math.min(...tempData, ...tempFeelsLikeData),
-                        max: Math.max(...tempData, ...tempFeelsLikeData),
+                        min: tempData.length + tempFeelsLikeData.length === 0 ? 0 : Math.min(...tempData, ...tempFeelsLikeData),
+                        max: tempData.length + tempFeelsLikeData.length === 0 ? 30 : Math.max(1, ...tempData, ...tempFeelsLikeData)
                     },
                 ]}>
                 <LinePlot />
@@ -696,8 +696,8 @@ const InsideGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                     {
                         id: 'temp',
                         position: 'none',
-                        min: Math.min(...tempData, ...tempFeelsLikeData),
-                        max: Math.max(...tempData, ...tempFeelsLikeData),
+                        min: tempData.length + tempFeelsLikeData.length === 0 ? 0 : Math.min(...tempData, ...tempFeelsLikeData),
+                        max: tempData.length + tempFeelsLikeData.length === 0 ? 0 : Math.max(1, ...tempData, ...tempFeelsLikeData),
                     },
                 ]}>
                 <LinePlot />
@@ -756,13 +756,13 @@ const RainGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                         id: 'raintotal',
                         position: 'none',
                         min: 0,
-                        max: Math.max(...rainData),
+                        max: rainData.length === 0 ? 50 : Math.max(1, ...rainData)
                     },
                     {
                         id: 'rainrate',
                         position: 'none',
                         min: Math.min(...rainRateData),
-                        max: Math.max(...rainRateData),
+                        max: rainRateData.length === 0 ? 50 : Math.max(1, ...rainRateData)
                     },
                 ]}>
                 <AreaPlot />
