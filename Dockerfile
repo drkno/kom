@@ -8,7 +8,9 @@ RUN cargo build --release --target x86_64-unknown-linux-musl
 FROM node:current-alpine AS react-builder
 WORKDIR /frontend
 COPY ./frontend /frontend
-RUN corepack yarn && \
+RUN rm /usr/local/bin/yarn* && \
+    npm install -g corepack@latest && \
+    corepack yarn && \
     corepack yarn build
 
 FROM scratch AS prod
