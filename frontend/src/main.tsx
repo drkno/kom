@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import CssBaseline from '@mui/material/CssBaseline';
+import { BrowserRouter } from 'react-router';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import type { } from '@mui/x-charts/themeAugmentation';
 import '@fontsource/roboto/300.css';
@@ -19,8 +20,10 @@ const theme = createTheme({
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <KomRoot />
+            <BrowserRouter>
+                <CssBaseline />
+                <KomRoot />
+            </BrowserRouter>
         </ThemeProvider>
     </StrictMode>,
 );

@@ -9,6 +9,7 @@ import {
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SunnyIcon from '@mui/icons-material/Sunny';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
+import { Routes, Route, Link } from 'react-router';
 import TodayTab from './todaytab';
 import PastTab from './pasttab';
 import StatsTab from './statstab';
@@ -27,14 +28,13 @@ const BoxContainer: React.FC<React.PropsWithChildren> = ({ children }) => (
     </Container>
 );
 
-const TabTag: React.FC<{ tab: number }> = ({ tab }) => {
-    switch (tab) {
-        case 0: return <TodayTab />;
-        case 1: return <PastTab />;
-        case 2: return <StatsTab />;
-        default: return null;
-    }
-};
+const TabTag: React.FC<{}> = () => (
+    <Routes>
+        <Route index element={<TodayTab />} />
+        <Route path="/past" element={<PastTab />} />
+        <Route path="/stats" element={<StatsTab />} />
+    </Routes>
+);
 
 const ContentSection: React.FC = () => {
     const [tab, setTab] = useState(0);
@@ -53,12 +53,12 @@ const ContentSection: React.FC = () => {
             </Typography>
 
             <Tabs value={tab} onChange={(_, v) => setTab(v)} indicatorColor="primary" textColor="inherit" sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Tab label="Today" icon={<SunnyIcon />} iconPosition="start" />
-                <Tab label="Past" icon={<AccessTimeIcon />} iconPosition="start" />
-                <Tab label="Stats" icon={<QueryStatsIcon />} iconPosition="start" />
+                <Tab label="Today" icon={<SunnyIcon />} iconPosition="start" component={Link} to='/' />
+                <Tab label="Past" icon={<AccessTimeIcon />} iconPosition="start" component={Link} to='/past' />
+                <Tab label="Stats" icon={<QueryStatsIcon />} iconPosition="start" component={Link} to='/stats' />
             </Tabs>
 
-            <TabTag tab={tab} />
+            <TabTag />
         </BoxContainer>
     );
 };
