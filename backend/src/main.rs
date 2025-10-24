@@ -237,7 +237,7 @@ async fn main() {
 
     println!("Starting server on {}", binding_address);
     let static_files = ServeDir::new("frontend")
-        .fallback(ServeFile::new("index.html"));
+        .fallback(ServeFile::new("frontend/index.html"));
     let router = Router::new()
         .route("/api/past", get(past))
         .route("/api/today", get(today))
