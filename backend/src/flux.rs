@@ -90,7 +90,7 @@ r._field == "solarradiation")
 |> aggregateWindow(every: 1mo, fn: min, createEmpty: false, timeSrc: "_start")
 |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
 |> sort(columns:["_time"])
-|> drop(columns: ["_model", "_field", "_start", "_stop", "_value"])
+|> drop(columns: ["_model", "_field", "_start", "_stop", "_value", "submitted_by"])
 
 rainy_days = from(bucket: "{bucket}")
 |> range(start: time(v: "{start}"), stop: time(v: "{end}"))
@@ -149,7 +149,7 @@ all_stats = join(
 
 all_stats
   |> sort(columns: ["_time"])
-  |> rename(columns: {{_measurement: "_field", submitted_by: "_value"}})
+  |> rename(columns: {{_measurement: "_field", model: "_value"}})
     "#)
 }
 

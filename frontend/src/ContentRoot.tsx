@@ -9,7 +9,7 @@ import {
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SunnyIcon from '@mui/icons-material/Sunny';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
-import { Routes, Route, Link } from 'react-router';
+import { Routes, Route, Link, useMatch } from 'react-router';
 import TodayTab from './todaytab';
 import PastTab from './pasttab';
 import StatsTab from './statstab';
@@ -28,16 +28,26 @@ const BoxContainer: React.FC<React.PropsWithChildren> = ({ children }) => (
     </Container>
 );
 
-const TabTag: React.FC<{}> = () => (
-    <Routes>
-        <Route index element={<TodayTab />} />
-        <Route path="/past" element={<PastTab />} />
-        <Route path="/stats" element={<StatsTab />} />
-    </Routes>
-);
+const TabTag: React.FC<{}> = () => {
+    return (
+        <Routes>
+            <Route index element={<TodayTab />} />
+            <Route path="/past" element={<PastTab />} />
+            <Route path="/stats" element={<StatsTab />} />
+        </Routes>
+    );
+};
+
+const getTabIndex = (): number => {
+    const past = useMatch('/past');
+    const stats = useMatch('/stats');
+    if (past) return 1;
+    if (stats) return 2;
+    return 0;
+};
 
 const ContentSection: React.FC = () => {
-    const [tab, setTab] = useState(0);
+    const [tab, setTab] = useState(getTabIndex());
     const location = 'Crows Nest';
     return (
         <BoxContainer>
