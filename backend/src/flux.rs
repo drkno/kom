@@ -42,6 +42,7 @@ pub(crate) fn build_monthly_flux(bucket: &str, start: &str, end: &str) -> String
 r._field == "tempc" or r._field == "tempinc" or r._field == "humidity" or r._field == "humidityin" or
 r._field == "uv" or r._field == "solarradiation")
 |> aggregateWindow(every: 1mo, fn: max, createEmpty: false, timeSrc: "_start")
+|> group(columns: ["_time"])
 |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
 |> sort(columns:["_time"])
 |> drop(columns: ["_model", "_field", "_start", "_stop", "_value", "_measurement", "submitted_by"])
@@ -54,6 +55,7 @@ r._field == "tempc" or r._field == "tempinc" or r._field == "humidity" or r._fie
 r._field == "uv" or r._field == "solarradiation")
 |> aggregateWindow(every: 1d, fn: max, createEmpty: false, timeSrc: "_start")
 |> aggregateWindow(every: 1mo, fn: mean, createEmpty: false, timeSrc: "_start")
+|> group(columns: ["_time"])
 |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
 |> sort(columns:["_time"])
 |> drop(columns: ["_model", "_field", "_start", "_stop", "_value", "_measurement", "submitted_by"])
@@ -65,6 +67,7 @@ averages = from(bucket: "{bucket}")
 r._field == "tempc" or r._field == "tempinc" or r._field == "humidity" or r._field == "humidityin" or
 r._field == "solarradiation")
 |> aggregateWindow(every: 1mo, fn: mean, createEmpty: false, timeSrc: "_start")
+|> group(columns: ["_time"])
 |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
 |> sort(columns:["_time"])
 |> drop(columns: ["_model", "_field", "_start", "_stop", "_value", "_measurement", "submitted_by"])
@@ -77,6 +80,7 @@ r._field == "tempc" or r._field == "tempinc" or r._field == "humidity" or r._fie
 r._field == "solarradiation")
 |> aggregateWindow(every: 1d, fn: min, createEmpty: false, timeSrc: "_start")
 |> aggregateWindow(every: 1mo, fn: mean, createEmpty: false, timeSrc: "_start")
+|> group(columns: ["_time"])
 |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
 |> sort(columns:["_time"])
 |> drop(columns: ["_model", "_field", "_start", "_stop", "_value", "_measurement", "submitted_by"])
@@ -88,6 +92,7 @@ minimums = from(bucket: "{bucket}")
 r._field == "tempc" or r._field == "tempinc" or r._field == "humidity" or r._field == "humidityin" or
 r._field == "solarradiation")
 |> aggregateWindow(every: 1mo, fn: min, createEmpty: false, timeSrc: "_start")
+|> group(columns: ["_time"])
 |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
 |> sort(columns:["_time"])
 |> drop(columns: ["_model", "_field", "_start", "_stop", "_value", "submitted_by"])
@@ -99,6 +104,9 @@ rainy_days = from(bucket: "{bucket}")
 |> aggregateWindow(every: 1d, fn: last, timeSrc: "_start")
 |> map(fn: (r) => ({{ r with _value: if exists r._value then r._value else 0.0 }}))
 |> difference(nonNegative: true, initialZero: true)
+|> group(columns: ["_time"])
+|> max(column: "_value")
+|> group()
 
 total_rain = rainy_days
 |> aggregateWindow(every: 1mo, fn: sum, createEmpty: false, timeSrc: "_start")
@@ -149,7 +157,11 @@ all_stats = join(
 
 all_stats
   |> sort(columns: ["_time"])
-  |> rename(columns: {{_measurement: "_field", model: "_value"}})
+  |> map(fn: (r) => ({{
+      r with
+          _field: "placeholder",
+          _value: "placeholder"
+}}))
     "#)
 }
 

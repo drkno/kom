@@ -5,7 +5,7 @@ RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig git bu
 RUN cargo fetch
 RUN cargo build --release --target x86_64-unknown-linux-musl
 
-FROM node:current-alpine AS react-builder
+FROM node:alpine AS react-builder
 WORKDIR /frontend
 COPY ./frontend /frontend
 RUN rm /usr/local/bin/yarn* && \
