@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     Box,
     Container,
@@ -28,7 +28,7 @@ const BoxContainer: React.FC<React.PropsWithChildren> = ({ children }) => (
     </Container>
 );
 
-const TabTag: React.FC<{}> = () => {
+const TabTag: React.FC = () => {
     return (
         <Routes>
             <Route index element={<TodayTab />} />
@@ -38,7 +38,7 @@ const TabTag: React.FC<{}> = () => {
     );
 };
 
-const getTabIndex = (): number => {
+const useTabIndex = (): number => {
     const past = useMatch('/past');
     const stats = useMatch('/stats');
     if (past) return 1;
@@ -47,7 +47,7 @@ const getTabIndex = (): number => {
 };
 
 const ContentSection: React.FC = () => {
-    const [tab, setTab] = useState(getTabIndex());
+    const tab = useTabIndex();
     const location = 'Crows Nest';
     return (
         <BoxContainer>
@@ -62,7 +62,7 @@ const ContentSection: React.FC = () => {
                 {location}
             </Typography>
 
-            <Tabs value={tab} onChange={(_, v) => setTab(v)} indicatorColor="primary" textColor="inherit" sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={tab} indicatorColor="primary" textColor="inherit" sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tab label="Today" icon={<SunnyIcon />} iconPosition="start" component={Link} to='/' />
                 <Tab label="Past" icon={<AccessTimeIcon />} iconPosition="start" component={Link} to='/past' />
                 <Tab label="Stats" icon={<QueryStatsIcon />} iconPosition="start" component={Link} to='/stats' />

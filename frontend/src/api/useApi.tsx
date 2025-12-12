@@ -18,7 +18,7 @@ const useApi = <T, R>(params: T, defaultValue: R | null, mockValues: R, loadData
             return;
         }
         setIsLoading(true);
-        (async() => {
+        (async () => {
             try {
                 if (JSON.stringify(params) === JSON.stringify(state.params)) {
                     return;
@@ -40,7 +40,7 @@ const useApi = <T, R>(params: T, defaultValue: R | null, mockValues: R, loadData
                 setIsLoading(false);
             }
         })();
-    }, [params, loadData, mockValues]);
+    }, [params, loadData, mockValues, isLoading, state.params]);
 
     if (isLoading || state.value === null) {
         return { loading: true };

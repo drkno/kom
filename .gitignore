@@ -29,3 +29,4 @@ frontend/*.local
 *.sw?
 
 backend/target
+backend/.env

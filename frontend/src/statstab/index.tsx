@@ -28,11 +28,23 @@ const toDate = (date: string) => Temporal.PlainDateTime.from(date).toZonedDateTi
 
 const StatsTab: React.FC = () => {
     const currentYear = Temporal.Now.instant().toZonedDateTimeISO(Temporal.Now.timeZoneId()).toPlainDate().year;
+
+    // Committed state (drives data)
     const [yearRange, setYearRange] = useState<YearRange>({
         start: currentYear,
         end: currentYear,
     });
 
+    // Local editing state
+    const [editYearRange, setEditYearRange] = useState<YearRange>(yearRange);
+
+    const isValid = editYearRange.start <= editYearRange.end;
+
+    const handleApply = () => {
+        if (isValid) {
+            setYearRange(editYearRange);
+        }
+    };
 
     const monthlyDataResult = loadMonthlyDataForRange(toDate(yearRange.start + '-01-01T00:00:00'), toDate(yearRange.end + '-12-31T23:59:59'));
     if (monthlyDataResult.loading) {
@@ -40,63 +52,80 @@ const StatsTab: React.FC = () => {
     }
     const months = monthlyDataResult.value;
 
-    if (!months.length || months.length === 0) {
-        return (<Typography>No data</Typography>);
-    }
-
     const monthsByYear: Record<number, MonthRecord[]> = {};
-    for (let month of months) {
-        const year = Temporal.PlainDateTime.from(month.time.substr(0, month.time.length - 1)).year;
-        if (!monthsByYear[year]) {
-            monthsByYear[year] = [];
+    if (months && months.length > 0) {
+        for (const month of months) {
+            const year = Temporal.PlainDateTime.from(month.time.substr(0, month.time.length - 1)).year;
+            if (!monthsByYear[year]) {
+                monthsByYear[year] = [];
+            }
+            monthsByYear[year].push(month);
         }
-        monthsByYear[year].push(month);
     }
-
-    const getUpdatedRange = (oldRange: YearRange, newStart: number | string, newEnd: number | string) => {
-        const newStartNum = typeof (newStart) === 'number' ? newStart : parseInt(newStart);
-        const newEndNum = typeof (newEnd) === 'number' ? newEnd : parseInt(newEnd);
-        if (isNaN(newStartNum) || isNaN(newEndNum) || newStartNum > newEndNum || newEndNum > currentYear) {
-            return oldRange;
-        }
-        return Object.assign({}, oldRange, {
-            start: newStartNum,
-            end: newEndNum
-        });
-    };
 
     const rangeStart = Math.max(yearRange.start, 2024);
     const rangeEnd = Math.min(yearRange.end, currentYear);
+
+    // Filter year list to only those in the range (visuals)
+    const yearsDisplay = Array.from({ length: (rangeEnd - rangeStart + 1) }, (_, index) => rangeStart + index);
 
     return (
         <Box display="flex" flexDirection="column" gap={2}>
             <Card variant="outlined">
                 <CardContent>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid size={6} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
+                        <Grid size={{ xs: 12, md: 5 }}>
                             <TextField
-                                type="text"
+                                type="number"
                                 label="Start Year"
                                 size="small"
-                                value={yearRange.start}
-                                onChange={(e) => setYearRange(getUpdatedRange(yearRange, e.target.value, yearRange.end))}
+                                fullWidth
+                                error={!isValid}
+                                value={editYearRange.start}
+                                onChange={(e) => setEditYearRange(r => ({ ...r, start: parseInt(e.target.value) || 0 }))}
                             />
                         </Grid>
-                        <Grid size={6}>
+                        <Grid size={{ xs: 12, md: 5 }}>
                             <TextField
-                                type="text"
+                                type="number"
                                 label="End Year"
                                 size="small"
-                                value={yearRange.end}
-                                onChange={(e) => setYearRange(getUpdatedRange(yearRange, yearRange.start, e.target.value))}
+                                fullWidth
+                                error={!isValid}
+                                value={editYearRange.end}
+                                onChange={(e) => setEditYearRange(r => ({ ...r, end: parseInt(e.target.value) || 0 }))}
                             />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 2 }} display="flex" justifyContent="flex-end">
+                            <Box sx={{ width: '100%' }}>
+                                <button
+                                    onClick={handleApply}
+                                    disabled={!isValid}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 16px',
+                                        backgroundColor: isValid ? '#1976d2' : '#e0e0e0',
+                                        color: isValid ? 'white' : '#9e9e9e',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: isValid ? 'pointer' : 'not-allowed',
+                                        fontSize: '0.875rem',
+                                        textTransform: 'uppercase',
+                                        fontWeight: 500,
+                                        boxShadow: isValid ? '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)' : 'none'
+                                    }}
+                                >
+                                    {isValid ? 'Apply' : 'Invalid'}
+                                </button>
+                            </Box>
                         </Grid>
                     </Grid>
                 </CardContent>
             </Card>
             {
-                Array.from({ length: (rangeEnd - rangeStart + 1) }, (_, index) => rangeStart + index)
-                    .map(year => (<YearlyStatsTable key={year} year={year} data={monthsByYear[year]} />))
+                (!months || months.length === 0)
+                    ? <Typography>No data</Typography>
+                    : yearsDisplay.map(year => (<YearlyStatsTable key={year} year={year} data={monthsByYear[year]} />))
             }
         </Box>
     );

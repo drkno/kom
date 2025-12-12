@@ -25,6 +25,7 @@ export const normaliseHourRecord = (hourRecord: HourRecord): HourRecord => {
         rainratemm: round(2, hourRecord.rainratemm),
         totalrainmm: round(2, hourRecord.totalrainmm),
         uv: round(1, hourRecord.uv),
+        solarradiation: round(1, hourRecord.solarradiation),
         feelslike: round(1, hourRecord.feelslike),
         feelslikein: round(1, hourRecord.feelslikein),
     };
@@ -66,7 +67,7 @@ export const normaliseMonthRecord = (monthRecord: MonthRecord): MonthRecord => {
 };
 
 const round = (places: number, value?: number) => {
-    if (value === void(0) || value === null) {
+    if (value === void (0) || value === null) {
         return;
     }
     return +value.toFixed(places);

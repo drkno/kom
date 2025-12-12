@@ -1,8 +1,7 @@
 use crate::types::{HourRecordFlux, MonthRecordFlux};
-use std::sync::Arc;
 use crate::{ApiError, ServerState};
 use influxdb2::models::Query as InfluxQuery;
-
+use std::sync::Arc;
 
 pub(crate) fn build_range_flux(bucket: &str, start: &str, end: &str) -> String {
     format!(
@@ -21,12 +20,12 @@ r._field == "totalrainmm" or r._field == "uv" or r._field == "solarradiation")
     )
 }
 
-pub(crate) async fn query_flux(state: &Arc<ServerState>, flux: &str) -> Result<Vec<HourRecordFlux>, ApiError> {
+pub(crate) async fn query_flux(
+    state: &Arc<ServerState>,
+    flux: &str,
+) -> Result<Vec<HourRecordFlux>, ApiError> {
     let query = InfluxQuery::new(flux.to_owned());
-    let result = state
-        .client
-        .query::<HourRecordFlux>(Some(query))
-        .await;
+    let result = state.client.query::<HourRecordFlux>(Some(query)).await;
 
     match result {
         Ok(value) => Ok(value),
@@ -35,7 +34,8 @@ pub(crate) async fn query_flux(state: &Arc<ServerState>, flux: &str) -> Result<V
 }
 
 pub(crate) fn build_monthly_flux(bucket: &str, start: &str, end: &str) -> String {
-    format!(r#"maximums = from(bucket: "{bucket}")
+    format!(
+        r#"maximums = from(bucket: "{bucket}")
 |> range(start: time(v: "{start}"), stop: time(v: "{end}"))
 |> filter(fn: (r) => r._measurement == "weather")
 |> filter(fn: (r) =>
@@ -101,9 +101,9 @@ rainy_days = from(bucket: "{bucket}")
 |> range(start: time(v: "{start}"), stop: time(v: "{end}"))
 |> filter(fn: (r) => r._measurement == "weather")
 |> filter(fn: (r) => r._field == "totalrainmm")
-|> aggregateWindow(every: 1d, fn: last, timeSrc: "_start")
-|> map(fn: (r) => ({{ r with _value: if exists r._value then r._value else 0.0 }}))
-|> difference(nonNegative: true, initialZero: true)
+|> difference(nonNegative: true)
+|> aggregateWindow(every: 1d, fn: sum, timeSrc: "_start")
+|> fill(value: 0.0)
 |> group(columns: ["_time"])
 |> max(column: "_value")
 |> group()
@@ -162,16 +162,16 @@ all_stats
           _field: "placeholder",
           _value: "placeholder"
 }}))
-    "#)
+    "#
+    )
 }
 
-
-pub(crate) async fn query_flux_month_records(state: &Arc<ServerState>, flux: &str) -> Result<Vec<MonthRecordFlux>, ApiError> {
+pub(crate) async fn query_flux_month_records(
+    state: &Arc<ServerState>,
+    flux: &str,
+) -> Result<Vec<MonthRecordFlux>, ApiError> {
     let query = InfluxQuery::new(flux.to_owned());
-    let result = state
-        .client
-        .query::<MonthRecordFlux>(Some(query))
-        .await;
+    let result = state.client.query::<MonthRecordFlux>(Some(query)).await;
 
     match result {
         Ok(value) => Ok(value),

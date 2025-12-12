@@ -2,6 +2,8 @@
 
 A parody of [BOM](https://beta.bom.gov.au) with real weather station data from a local weather station.
 
+See [weather.makereti.co.nz](https://weather.makereti.co.nz).
+
 ## Why
 
 Why not. Also having your own weather site is fun.
@@ -65,5 +67,25 @@ services:
             - INFLUX_BUCKET=${INFLUXDB_BUCKET}
             - INFLUX_TOKEN=${INFLUXDB_TOKEN}
             - INFLUX_ORG=${INFLUXDB_ORG}
+            - TZ=${TZ}
+            - LAT=${LAT}
+            - LONG=${LONG}
+            - PORTNUMBER=${PORTNUMBER}
         restart: unless-stopped
+```
+
+## Manually starting
+
+```sh
+## Backend
+cd backend/
+cargo fetch
+cargo build
+export $(cat .env | xargs)
+./target/debug/kom
+
+# Frontend
+cd frontend/
+corepack yarn
+corepack yarn dev
 ```
