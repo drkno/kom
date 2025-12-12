@@ -98,7 +98,9 @@ pub(crate) struct MonthRecordFlux {
 impl Default for HourRecordFlux {
     fn default() -> Self {
         Self {
-            time: chrono::prelude::DateTime::from_timestamp(0_i64, 0_u32).unwrap().with_timezone(&FixedOffset::east_opt(0).unwrap()),
+            time: chrono::prelude::DateTime::from_timestamp(0_i64, 0_u32)
+                .unwrap()
+                .with_timezone(&FixedOffset::east_opt(0).unwrap()),
             tempc: 0_f64,
             tempinc: 0_f64,
             humidity: 0_f64,
@@ -117,7 +119,9 @@ impl Default for HourRecordFlux {
 impl Default for HourRecordWithDerivedTypes {
     fn default() -> Self {
         Self {
-            time: chrono::prelude::DateTime::from_timestamp(0_i64, 0_u32).unwrap().with_timezone(&FixedOffset::east_opt(0).unwrap()),
+            time: chrono::prelude::DateTime::from_timestamp(0_i64, 0_u32)
+                .unwrap()
+                .with_timezone(&FixedOffset::east_opt(0).unwrap()),
             tempc: 0_f64,
             tempinc: 0_f64,
             humidity: 0_f64,
@@ -157,7 +161,9 @@ impl From<HourRecordFlux> for HourRecordWithDerivedTypes {
 impl Default for TodayDataWithDerivedTypes {
     fn default() -> Self {
         Self {
-            time: chrono::prelude::DateTime::from_timestamp(0_i64, 0_u32).unwrap().with_timezone(&FixedOffset::east_opt(0).unwrap()),
+            time: chrono::prelude::DateTime::from_timestamp(0_i64, 0_u32)
+                .unwrap()
+                .with_timezone(&FixedOffset::east_opt(0).unwrap()),
             tempc: 0_f64,
             tempinc: 0_f64,
             humidity: 0_f64,
@@ -185,7 +191,9 @@ impl Default for TodayDataWithDerivedTypes {
 impl Default for MonthRecordFlux {
     fn default() -> Self {
         Self {
-            time: chrono::prelude::DateTime::from_timestamp(0_i64, 0_u32).unwrap().with_timezone(&FixedOffset::east_opt(0).unwrap()),
+            time: chrono::prelude::DateTime::from_timestamp(0_i64, 0_u32)
+                .unwrap()
+                .with_timezone(&FixedOffset::east_opt(0).unwrap()),
             humidity: 0_f64,
             humidity_absolute_max: 0_f64,
             humidity_absolute_min: 0_f64,
