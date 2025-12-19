@@ -35,6 +35,39 @@ const toHour = (iso: string): number => toDate(iso).hour;
 const HourlyTable: React.FC<{ start: Temporal.Instant, end: Temporal.Instant, supportsNow?: boolean }> = ({ start, end, supportsNow = false }) => {
     const [filter, setFilter] = useState('all');
     const tableContainerRef = React.useRef<HTMLDivElement>(null);
+    const isDown = React.useRef(false);
+    const startX = React.useRef(0);
+    const scrollLeft = React.useRef(0);
+    const [cursor, setCursor] = useState('grab');
+
+    const onMouseDown = (e: React.MouseEvent) => {
+        isDown.current = true;
+        setCursor('grabbing');
+        if (tableContainerRef.current) {
+            startX.current = e.pageX - tableContainerRef.current.offsetLeft;
+            scrollLeft.current = tableContainerRef.current.scrollLeft;
+        }
+    };
+
+    const onMouseLeave = () => {
+        isDown.current = false;
+        setCursor('grab');
+    };
+
+    const onMouseUp = () => {
+        isDown.current = false;
+        setCursor('grab');
+    };
+
+    const onMouseMove = (e: React.MouseEvent) => {
+        if (!isDown.current) return;
+        e.preventDefault();
+        if (tableContainerRef.current) {
+            const x = e.pageX - tableContainerRef.current.offsetLeft;
+            const walk = (x - startX.current); // scroll-fast
+            tableContainerRef.current.scrollLeft = scrollLeft.current - walk;
+        }
+    };
     const hourlyDataResult = loadPastDataForRange(start, end);
 
     const rows = React.useMemo(() => {
@@ -140,7 +173,14 @@ const HourlyTable: React.FC<{ start: Temporal.Instant, end: Temporal.Instant, su
             <Filter filter={filter} setFilter={setFilter} />
             <br />
             <br />
-            <TableContainer ref={tableContainerRef}>
+            <TableContainer
+                ref={tableContainerRef}
+                onMouseDown={onMouseDown}
+                onMouseLeave={onMouseLeave}
+                onMouseUp={onMouseUp}
+                onMouseMove={onMouseMove}
+                style={{ cursor: cursor, userSelect: cursor === 'grabbing' ? 'none' : 'auto' }}
+            >
                 <Table size="small"> {/* Use small size for better density */}
                     <TableHead>
                         <TableRow>
