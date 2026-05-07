@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 
 const Loading: React.FC = () => (
-  <Box display="flex" justifyContent="center" p={3}>
+  <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
     <CircularProgress />
   </Box>
 );

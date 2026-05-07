@@ -21,7 +21,7 @@ import Loading from '../common/Loading';
 import UvIndex from './UvIndex';
 import { WindDirectionArrow, WindDirectionName } from './WindDirection';
 import { WeatherIcon } from './WeatherType';
-import { AreaPlot, ChartContainer, ChartsTooltip, LinePlot } from '@mui/x-charts';
+import { AreaPlot, ChartsContainer, ChartsTooltip, LinePlot } from '@mui/x-charts';
 
 
 interface DayHourBuckets {
@@ -667,7 +667,7 @@ const DayGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
     const labels = data.map(hour => hour.time);
     return (
         <div style={{ width: '100%', height: 100, display: 'inline-block' }}>
-            <ChartContainer
+            <ChartsContainer
                 margin={{
                     left: 0,
                     right: 0,
@@ -720,7 +720,7 @@ const DayGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                 <AreaPlot />
                 <LinePlot />
                 <ChartsTooltip />
-            </ChartContainer>
+            </ChartsContainer>
         </div>
     );
 };
@@ -732,7 +732,7 @@ const OutsideGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
     const labels = data.map(hour => hour.time);
     return (
         <div style={{ width: '100%', height: 100, display: 'inline-block' }}>
-            <ChartContainer
+            <ChartsContainer
                 margin={{
                     left: 0,
                     right: 0,
@@ -781,7 +781,7 @@ const OutsideGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                 <LinePlot />
                 <LinePlot />
                 <ChartsTooltip />
-            </ChartContainer>
+            </ChartsContainer>
         </div>
     );
 };
@@ -793,7 +793,7 @@ const InsideGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
     const labels = data.map(hour => hour.time);
     return (
         <div style={{ width: '100%', height: 100, display: 'inline-block' }}>
-            <ChartContainer
+            <ChartsContainer
                 margin={{
                     left: 0,
                     right: 0,
@@ -842,7 +842,7 @@ const InsideGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                 <LinePlot />
                 <LinePlot />
                 <ChartsTooltip />
-            </ChartContainer>
+            </ChartsContainer>
         </div>
     );
 };
@@ -855,7 +855,7 @@ const RainGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
     const labels = data.map(hour => hour.time);
     return (
         <div style={{ width: '100%', height: 100, display: 'inline-block' }}>
-            <ChartContainer
+            <ChartsContainer
                 margin={{
                     left: 0,
                     right: 0,
@@ -908,7 +908,7 @@ const RainGraph: React.FC<{ hours: HourRecord[] }> = ({ hours }) => {
                 <AreaPlot />
                 <LinePlot />
                 <ChartsTooltip />
-            </ChartContainer>
+            </ChartsContainer>
         </div>
     );
 };

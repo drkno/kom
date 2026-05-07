@@ -44,10 +44,10 @@ const PastTab: React.FC = () => {
     };
 
     return (
-        <Box display="flex" flexDirection="column" gap={2}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Card variant="outlined">
                 <CardContent>
-                    <Grid container spacing={2} alignItems="center">
+                    <Grid container spacing={2} sx={{ alignItems: 'center' }}>
                         <Grid size={{ xs: 12, md: 5 }}>
                             <TextField
                                 type="datetime-local"
@@ -55,7 +55,7 @@ const PastTab: React.FC = () => {
                                 size="small"
                                 fullWidth
                                 error={!isValid}
-                                InputLabelProps={{ shrink: true }}
+                                slotProps={{ inputLabel: { shrink: true } }}
                                 value={toFormatString(editRange.start)}
                                 onChange={(e) => setEditRange((r) => ({ ...r, start: toInstant(r.start, e.target.value) }))}
                                 onClick={(e) => {
@@ -71,7 +71,7 @@ const PastTab: React.FC = () => {
                                 size="small"
                                 fullWidth
                                 error={!isValid}
-                                InputLabelProps={{ shrink: true }}
+                                slotProps={{ inputLabel: { shrink: true } }}
                                 value={toFormatString(editRange.end)}
                                 onChange={(e) => setEditRange((r) => ({ ...r, end: toInstant(r.end, e.target.value) }))}
                                 onClick={(e) => {
@@ -80,7 +80,7 @@ const PastTab: React.FC = () => {
                                 }}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12, md: 2 }} display="flex" justifyContent="flex-end">
+                        <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <Box sx={{ width: '100%' }}>
                                 <button
                                     onClick={handleApply}

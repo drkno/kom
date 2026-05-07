@@ -12,7 +12,7 @@ const TemperatureCard: React.FC<{ todayData: TodayData }> = ({
 }) => {
     const hour = Temporal.Now.instant().toZonedDateTimeISO('Australia/Sydney').hour;
     return (
-        <Grid size={{ xs: 12, md: 4 }} fontStyle={{textAlign: 'center'}}>
+        <Grid size={{ xs: 12, md: 4 }} sx={{ textAlign: 'center' }}>
             <WeatherIcon record={todayData} hour={hour} size='large' />
             <Typography variant="h4" gutterBottom>
                 <WeatherName record={todayData} hour={hour} />
