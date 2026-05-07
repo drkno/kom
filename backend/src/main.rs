@@ -191,10 +191,12 @@ async fn today(State(state): State<Arc<ServerState>>) -> Result<Json<serde_json:
     let solar_day = SolarDay::new(state.coordinates, Local::now().date_naive());
     result.sunrise = solar_day
         .event_time(SolarEvent::Sunrise)
+        .expect("Sunrise time should be available")
         .with_timezone(&Local)
         .to_rfc3339();
     result.sunset = solar_day
         .event_time(SolarEvent::Sunset)
+        .expect("Sunset time should be available")
         .with_timezone(&Local)
         .to_rfc3339();
     result.solarradiation = last.solarradiation;

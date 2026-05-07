@@ -70,10 +70,10 @@ const StatsTab: React.FC = () => {
     const yearsDisplay = Array.from({ length: (rangeEnd - rangeStart + 1) }, (_, index) => rangeStart + index);
 
     return (
-        <Box display="flex" flexDirection="column" gap={2}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Card variant="outlined">
                 <CardContent>
-                    <Grid container spacing={2} alignItems="center">
+                    <Grid container spacing={2} sx={{ alignItems: 'center' }}>
                         <Grid size={{ xs: 12, md: 5 }}>
                             <TextField
                                 type="number"
@@ -96,7 +96,7 @@ const StatsTab: React.FC = () => {
                                 onChange={(e) => setEditYearRange(r => ({ ...r, end: parseInt(e.target.value) || 0 }))}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12, md: 2 }} display="flex" justifyContent="flex-end">
+                        <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <Box sx={{ width: '100%' }}>
                                 <button
                                     onClick={handleApply}
