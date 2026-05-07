@@ -1,11 +1,11 @@
-FROM rust:1.88-alpine AS rust-builder
+FROM rust:1.95-alpine AS rust-builder
 WORKDIR /backend
 COPY ./backend .
 RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig git build-base
 RUN cargo fetch
 RUN cargo build --release --target x86_64-unknown-linux-musl
 
-FROM node:alpine AS react-builder
+FROM node:24-alpine AS react-builder
 WORKDIR /frontend
 COPY ./frontend /frontend
 RUN rm /usr/local/bin/yarn* && \
