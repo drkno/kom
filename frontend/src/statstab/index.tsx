@@ -5,7 +5,6 @@ import {
     Card,
     CardContent,
     Typography,
-    TextField,
     Table,
     TableHead,
     TableRow,
@@ -14,6 +13,10 @@ import {
     TableCell
 } from '@mui/material';
 import { Temporal } from 'temporal-polyfill';
+import dayjs from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { loadMonthlyDataForRange } from '../api';
 import Loading from '../common/Loading';
 import type { MonthRecord } from '../api/types';
@@ -31,7 +34,7 @@ const StatsTab: React.FC = () => {
 
     // Committed state (drives data)
     const [yearRange, setYearRange] = useState<YearRange>({
-        start: currentYear,
+        start: 2025,
         end: currentYear,
     });
 
@@ -73,53 +76,63 @@ const StatsTab: React.FC = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Card variant="outlined">
                 <CardContent>
-                    <Grid container spacing={2} sx={{ alignItems: 'center' }}>
-                        <Grid size={{ xs: 12, md: 5 }}>
-                            <TextField
-                                type="number"
-                                label="Start Year"
-                                size="small"
-                                fullWidth
-                                error={!isValid}
-                                value={editYearRange.start}
-                                onChange={(e) => setEditYearRange(r => ({ ...r, start: parseInt(e.target.value) || 0 }))}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 5 }}>
-                            <TextField
-                                type="number"
-                                label="End Year"
-                                size="small"
-                                fullWidth
-                                error={!isValid}
-                                value={editYearRange.end}
-                                onChange={(e) => setEditYearRange(r => ({ ...r, end: parseInt(e.target.value) || 0 }))}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <Box sx={{ width: '100%' }}>
-                                <button
-                                    onClick={handleApply}
-                                    disabled={!isValid}
-                                    style={{
-                                        width: '100%',
-                                        padding: '8px 16px',
-                                        backgroundColor: isValid ? '#1976d2' : '#e0e0e0',
-                                        color: isValid ? 'white' : '#9e9e9e',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: isValid ? 'pointer' : 'not-allowed',
-                                        fontSize: '0.875rem',
-                                        textTransform: 'uppercase',
-                                        fontWeight: 500,
-                                        boxShadow: isValid ? '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)' : 'none'
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+                            <Grid size={{ xs: 12, md: 5 }}>
+                                <DatePicker
+                                    label="Start Year"
+                                    views={['year']}
+                                    value={dayjs().year(editYearRange.start)}
+                                    onChange={(newValue) => setEditYearRange(r => ({ ...r, start: newValue?.year() || 0 }))}
+                                    slotProps={{
+                                        textField: {
+                                            size: 'small',
+                                            fullWidth: true,
+                                            error: !isValid
+                                        }
                                     }}
-                                >
-                                    {isValid ? 'Apply' : 'Invalid'}
-                                </button>
-                            </Box>
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 5 }}>
+                                <DatePicker
+                                    label="End Year"
+                                    views={['year']}
+                                    value={dayjs().year(editYearRange.end)}
+                                    onChange={(newValue) => setEditYearRange(r => ({ ...r, end: newValue?.year() || 0 }))}
+                                    slotProps={{
+                                        textField: {
+                                            size: 'small',
+                                            fullWidth: true,
+                                            error: !isValid
+                                        }
+                                    }}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <Box sx={{ width: '100%' }}>
+                                    <button
+                                        onClick={handleApply}
+                                        disabled={!isValid}
+                                        style={{
+                                            width: '100%',
+                                            padding: '8px 16px',
+                                            backgroundColor: isValid ? '#1976d2' : '#e0e0e0',
+                                            color: isValid ? 'white' : '#9e9e9e',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            cursor: isValid ? 'pointer' : 'not-allowed',
+                                            fontSize: '0.875rem',
+                                            textTransform: 'uppercase',
+                                            fontWeight: 500,
+                                            boxShadow: isValid ? '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)' : 'none'
+                                        }}
+                                    >
+                                        {isValid ? 'Apply' : 'Invalid'}
+                                    </button>
+                                </Box>
+                            </Grid>
                         </Grid>
-                    </Grid>
+                    </LocalizationProvider>
                 </CardContent>
             </Card>
             {
