@@ -3,8 +3,12 @@ import NavigationIcon from '@mui/icons-material/Navigation';
 import InlineIcon from './InlineIcon';
 
 export const WindDirectionArrow: React.FC<{ direction?: number }> = ({ direction }) => {
+    // The Navigation icon points "up" by default, which we treat as the
+    // direction wind is blowing FROM (meteorological convention, matches
+    // WindDirectionName below). Add 180deg so the arrow instead points
+    // in the direction the wind is flowing TO.
     const directionStyle: CSSProperties = {
-        transform: `rotate(${direction || 0}deg)`
+        transform: `rotate(${((direction || 0) + 180) % 360}deg)`
     };
 
     return (
