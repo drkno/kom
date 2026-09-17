@@ -1,4 +1,4 @@
-FROM rust:1.95-alpine AS rust-builder
+FROM rust:1.98-alpine AS rust-builder
 WORKDIR /backend
 COPY ./backend .
 RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig git build-base

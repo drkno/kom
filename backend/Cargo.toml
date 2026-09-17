@@ -21,5 +21,5 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 thiserror = "2.0.18"
 tokio = { version = "1.52.2", features = ["full"] }
-tower-http = { version = "0.6.10", features = ["fs"] }
+tower-http = { version = "0.7.1", features = ["fs"] }
 tracing-subscriber = { version = "0.3.23", features = ["fmt", "env-filter", "serde"] }
