@@ -144,7 +144,7 @@ const uvColour = (val?: number): ColourStyle => {
 
 const ColourTableCell: React.FC<{ type: 'temp' | 'uv' | 'rain' | 'green' | 'humidity' | 'sunshine' | 'days', children: number }> = ({ type, children }) => {
     let unit;
-    let colours: ColourStyle | null = null;
+    let colours: ColourStyle;
     let decimalPlaces = 1;
     switch (type) {
         case 'temp':
@@ -180,7 +180,7 @@ const ColourTableCell: React.FC<{ type: 'temp' | 'uv' | 'rain' | 'green' | 'humi
     }
 
     return (
-        <TableCell style={{ backgroundColor: colours!.background, color: colours!.textColour, textAlign: 'center' }}>
+        <TableCell style={{ backgroundColor: colours.background, color: colours.textColour, textAlign: 'center' }}>
             {children.toFixed(decimalPlaces)} {unit}
         </TableCell>
     );

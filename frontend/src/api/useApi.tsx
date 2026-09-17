@@ -7,42 +7,37 @@ interface State<T, R> {
 }
 
 const useApi = <T, R>(params: T, defaultValue: R | null, mockValues: R, loadData: (loadParams: T) => Promise<R>): LoadingOrValue<R> => {
-    const [isLoading, setIsLoading] = useState(false);
     const [state, setState] = useState<State<T, R>>({
         params: null,
         value: defaultValue
     });
 
+    const isCurrent = JSON.stringify(params) === JSON.stringify(state.params);
+
     useEffect(() => {
-        if (isLoading) {
+        if (isCurrent) {
             return;
         }
-        setIsLoading(true);
+        let cancelled = false;
         (async () => {
             try {
-                if (JSON.stringify(params) === JSON.stringify(state.params)) {
-                    return;
-                }
                 const data = await loadData(params);
-                setState({
-                    params,
-                    value: data
-                });
+                if (!cancelled) {
+                    setState({ params, value: data });
+                }
             } catch (error) {
                 console.error('Error loading data:', error);
-                if (import.meta.env.DEV) {
-                    setState({
-                        params,
-                        value: mockValues
-                    });
+                if (!cancelled && import.meta.env.DEV) {
+                    setState({ params, value: mockValues });
                 }
-            } finally {
-                setIsLoading(false);
             }
         })();
-    }, [params, loadData, mockValues, isLoading, state.params]);
+        return () => {
+            cancelled = true;
+        };
+    }, [params, loadData, mockValues, isCurrent]);
 
-    if (isLoading || state.value === null) {
+    if (!isCurrent || state.value === null) {
         return { loading: true };
     }
     return { loading: false, value: state.value };

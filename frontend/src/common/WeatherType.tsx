@@ -9,7 +9,7 @@ import { isNight } from '../util/derive';
 export type WeatherType = 'Clear' | 'Mostly Clear' | 'Overcast' | 'Rain';
 
 const getWeatherType = (rain: number, solarradiation: number, hour: number): WeatherType => {
-    let weatherType: WeatherType = 'Mostly Clear';
+    let weatherType: WeatherType;
     if (rain > 0) {
         weatherType = 'Rain';
     }

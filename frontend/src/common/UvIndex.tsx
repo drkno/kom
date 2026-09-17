@@ -6,8 +6,8 @@ const UvIndex: React.FC<{ uv?: number, describe?: boolean }> = ({ uv, describe }
     if (uv === void(0) || uv === null || isNaN(uv)) {
         uv = 0;
     }
-    let colour: 'inherit' | 'action' | 'disabled' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'disabled';
-    let description = '--';
+    let colour: 'inherit' | 'action' | 'disabled' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+    let description: string;
 
     if (uv === void(0) || uv === null || uv < 0 || isNaN(uv)) {
         colour = 'disabled';
