@@ -1,4 +1,5 @@
 mod flux;
+mod radar;
 mod types;
 
 use axum::{
@@ -22,6 +23,7 @@ use tracing_subscriber::EnvFilter;
 
 use crate::ApiError::Other;
 use crate::flux::{build_monthly_flux, build_range_flux, query_flux, query_flux_month_records};
+use crate::radar::RadarCache;
 use crate::types::{HourRecordWithDerivedTypes, TodayDataWithDerivedTypes};
 
 #[derive(Parser, Debug)]
@@ -65,6 +67,7 @@ struct ServerState {
     client: Client,
     bucket: String,
     coordinates: Coordinates,
+    radar: Arc<RadarCache>,
 }
 
 #[derive(Debug, Error)]
@@ -228,6 +231,27 @@ async fn monthly(
     Ok(Json(serde_json::to_value(data).unwrap()))
 }
 
+async fn radar(State(state): State<Arc<ServerState>>) -> Result<Json<serde_json::Value>, ApiError> {
+    let manifest = state.radar.manifest().await.map_err(ApiError::Other)?;
+
+    Ok(Json(serde_json::to_value(manifest).unwrap()))
+}
+
+async fn radar_image(
+    State(state): State<Arc<ServerState>>,
+    axum::extract::Path(name): axum::extract::Path<String>,
+) -> impl IntoResponse {
+    match state.radar.image(&name) {
+        Some(bytes) => (
+            StatusCode::OK,
+            [(axum::http::header::CONTENT_TYPE, "image/png")],
+            bytes.to_vec(),
+        )
+            .into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
+}
+
 async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c()
@@ -270,6 +294,7 @@ async fn main() {
         client,
         bucket: config.influx_bucket,
         coordinates,
+        radar: Arc::new(RadarCache::default()),
     });
 
     println!("Starting server on {}", binding_address);
@@ -278,6 +303,8 @@ async fn main() {
         .route("/api/past", get(past))
         .route("/api/today", get(today))
         .route("/api/monthly", get(monthly))
+        .route("/api/radar", get(radar))
+        .route("/api/radar/image/{name}", get(radar_image))
         .fallback_service(static_files)
         .with_state(state);
     let listener = tokio::net::TcpListener::bind(binding_address)

@@ -10,11 +10,13 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SunnyIcon from '@mui/icons-material/Sunny';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import RadarIcon from '@mui/icons-material/Radar';
 import { Routes, Route, Link, useMatch } from 'react-router';
 import TodayTab from './todaytab';
 import PastTab from './pasttab';
 import StatsTab from './statstab';
 import CompareTab from './comparetab';
+import RadarTab from './radartab';
 
 const BoxContainer: React.FC<React.PropsWithChildren> = ({ children }) => (
     <Container maxWidth="xl" disableGutters>
@@ -36,6 +38,7 @@ const TabTag: React.FC = () => {
             <Route index element={<TodayTab />} />
             <Route path="/past" element={<PastTab />} />
             <Route path="/compare" element={<CompareTab />} />
+            <Route path="/radar" element={<RadarTab />} />
             <Route path="/stats" element={<StatsTab />} />
         </Routes>
     );
@@ -44,10 +47,12 @@ const TabTag: React.FC = () => {
 const useTabIndex = (): number => {
     const past = useMatch('/past');
     const compare = useMatch('/compare');
+    const radar = useMatch('/radar');
     const stats = useMatch('/stats');
     if (past) return 1;
     if (compare) return 2;
-    if (stats) return 3;
+    if (radar) return 3;
+    if (stats) return 4;
     return 0;
 };
 
@@ -71,6 +76,7 @@ const ContentSection: React.FC = () => {
                 <Tab label="Today" icon={<SunnyIcon />} iconPosition="start" component={Link} to='/' />
                 <Tab label="Past" icon={<AccessTimeIcon />} iconPosition="start" component={Link} to='/past' />
                 <Tab label="Compare" icon={<CompareArrowsIcon />} iconPosition="start" component={Link} to='/compare' />
+                <Tab label="Radar" icon={<RadarIcon />} iconPosition="start" component={Link} to='/radar' />
                 <Tab label="Stats" icon={<QueryStatsIcon />} iconPosition="start" component={Link} to='/stats' />
             </Tabs>
 
