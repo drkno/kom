@@ -1,1 +1,2 @@
-export { isNight, dewPoint } from './derive.tsx';
+export { isNight, dewPoint, getTimeOfDayPeriod } from './derive.tsx';
+export type { TimeOfDayPeriod } from './derive.tsx';
